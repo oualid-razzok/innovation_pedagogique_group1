@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: "If you use these healthcare simulation webapps in your research, teaching, or scientific publications, please cite them using the metadata below."
+title: "PMSS - La Plate-forme Marocaine de Simulation en Santé"
+authors:
+  - family-names: "Razzok"
+    given-names: "Oualid"
+version: 1.0.0
+date-released: "2026-07-09"
+url: "https://github.com/oualid-razzok/innovation_pedagogique_group1"
+abstract: "A collection of lightweight, offline-first, single-file HTML healthcare simulation webapps designed to democratize medical education."

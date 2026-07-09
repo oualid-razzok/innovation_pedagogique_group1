@@ -27,11 +27,15 @@ High-fidelity simulation shouldn't require high-end budgets or constant internet
 2. Click the **"Raw"** button or right-click and select **"Save link as..."** to download the `.html` file to your computer.
 3. Double-click the downloaded file. It will open in your default web browser and work perfectly offline.
 
+## Request simulation
+Have a request for a specific medical machine or clinical scenario? Please open a GitHub Issue and let us know! 
+
 ## 📝 Citation & Academic Use
 These tools are free for educational and non-commercial use. **If you use PMSS applications in your research, teaching, or scientific publications, you must reference this work.** 
 
 Please cite us as follows:
 > Razzok, O. (2026). *PMSS - La Plate-forme Marocaine de Simulation en Santé* [Healthcare simulation webapps]. Retrieved from https://github.com/oualid-razzok/PMSS-Simulations
+
 
 *You can also use the "Cite this repository" button on the right sidebar of this GitHub page to generate a BibTeX or APA citation.*
 

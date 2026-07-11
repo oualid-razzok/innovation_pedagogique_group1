@@ -11,47 +11,56 @@
         .app-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
         .app-card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); text-align: center; }
         .app-card h3 { margin-top: 0; color: #2980b9; }
-        .btn { display: inline-block; margin-top: 10px; padding: 10px 20px; background: #2980b9; color: white; text-decoration: none; border-radius: 5px; }
+        .app-card .variant { display: inline-block; margin: 4px 4px 0; }
+        .btn { display: inline-block; margin-top: 10px; padding: 8px 16px; background: #2980b9; color: white; text-decoration: none; border-radius: 5px; font-size: 0.9em; }
         .btn:hover { background: #3498db; }
+        .btn.secondary { background: #95a5a6; }
+        .btn.secondary:hover { background: #7f8c8d; }
+        .badge { display: inline-block; font-size: 0.7em; padding: 2px 8px; border-radius: 999px; background: #fef3c7; color: #92400e; margin-left: 6px; vertical-align: middle; }
         footer { text-align: center; margin-top: 40px; font-size: 0.9em; color: #7f8c8d; }
     </style>
 </head>
 <body>
 
     <h1>🇲🇦 PMSS</h1>
-    <p class="subtitle">La Plate-forme Marocaine de Simulation en Santé<br>"Simulation is a technique, not a technology."</p>
+    <p class="subtitle">La Plate-forme Marocaine de Simulation en Santé<br>« La simulation est une technique, pas une technologie. »</p>
 
     <div class="app-grid">
         <div class="app-card">
-            <h3>Normal ECG Simulator</h3>
-            <p>Simulate and understand normal ECG waveforms.</p>
-            <a href="normal-ecg-simulateur.html" class="btn">Launch App</a>
+            <h3>Simulateur ECG normal</h3>
+            <p>Simulez et comprenez les tracés ECG normaux.</p>
+            <a href="normal-ecg-simulateur.html" class="btn">Ouvrir l'application</a>
         </div>
         <div class="app-card">
-            <h3>Cardiac Axis</h3>
-            <p>Interactive tool to determine the electrical axis.</p>
-            <a href="axe-cardiaque.html" class="btn">Launch App</a>
+            <h3>Axe cardiaque <span class="badge">2 versions</span></h3>
+            <p>Outil interactif pour déterminer l'axe électrique du cœur.</p>
+            <div class="variant">
+                <a href="axe-cardiaque.html" class="btn">Version animée</a>
+            </div>
+            <div class="variant">
+                <a href="axe-cardiaque-statique.html" class="btn secondary">Version statique</a>
+            </div>
         </div>
         <div class="app-card">
-            <h3>Electrode Mapping</h3>
-            <p>Visualize ECG lead placements.</p>
-            <a href="carto-electrode.html" class="btn">Launch App</a>
+            <h3>Cartographie des électrodes</h3>
+            <p>Visualisez le placement des dérivations ECG.</p>
+            <a href="carto-electrode.html" class="btn">Ouvrir l'application</a>
         </div>
         <div class="app-card">
-            <h3>Wave Labeler</h3>
-            <p>Practice identifying P, QRS, and T waves.</p>
-            <a href="etiqueteur-ondes.html" class="btn">Launch App</a>
+            <h3>Étiqueteur d'ondes</h3>
+            <p>Entraînez-vous à identifier les ondes P, QRS et T.</p>
+            <a href="etiqueteur-ondes.html" class="btn">Ouvrir l'application</a>
         </div>
         <div class="app-card">
-            <h3>Find the Error</h3>
-            <p>Diagnostic training for ECG abnormalities.</p>
-            <a href="trouver-erreur.html" class="btn">Launch App</a>
+            <h3>Trouver l'erreur</h3>
+            <p>Entraînement diagnostique pour repérer les anomalies ECG.</p>
+            <a href="trouver-erreur.html" class="btn">Ouvrir l'application</a>
         </div>
     </div>
 
     <footer>
-        <p>© 2026 PMSS (Oualid Razzok). Free for educational use.<br>
-        If used in a publication, please <a href="https://github.com/oualid-razzok/PMSS-Simulations">cite this repository</a>.</p>
+        <p>© 2026 PMSS (Oualid Razzok). Usage éducatif libre sous licence CC BY 4.0.<br>
+        En cas d'utilisation dans une publication, merci de <a href="https://github.com/oualid-razzok/PMSS-Simulations">citer ce dépôt</a>.</p>
     </footer>
 
 </body>

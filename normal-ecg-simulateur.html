@@ -211,6 +211,37 @@
     color: #404040;
   }
 
+  /* ===== Bouton Pause ===== */
+  .pause-btn {
+    flex: 0 0 auto;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    background: #f5f5f5;
+    border: 1px solid #d4d4d4;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+    padding: 0;
+    line-height: 1;
+  }
+  .pause-btn:hover {
+    background: #e5e5e5;
+    border-color: #1a1a1a;
+  }
+  .pause-btn:focus-visible {
+    outline: 2px solid #1a1a1a;
+    outline-offset: 1px;
+  }
+  .pause-btn.paused {
+    background: #1a1a1a;
+    color: #ffffff;
+    border-color: #1a1a1a;
+  }
+
   /* ===== Mobile Optimization ===== */
   @media (max-width: 400px) {
     .lead-grid {
@@ -256,6 +287,14 @@
             aria-label="Fréquence cardiaque"
           >
           <span class="hr-value"><span id="hr-slider-value">80</span> bpm</span>
+          <button
+            type="button"
+            id="pause-btn"
+            class="pause-btn"
+            aria-pressed="false"
+            aria-label="Mettre en pause le balayage de la trace"
+            title="Pause/Reprise (Espace)"
+          >⏸</button>
         </div>
       </div>
     </div>
@@ -492,6 +531,7 @@
     playhead: 0,         // position courante de balayage en pixels
     currentTime: 0,      // temps de lecture accumulé en secondes
     lastFrameTime: 0,    // timestamp de la frame précédente
+    paused: false,       // pause du balayage (le tracé reste figé mais visible)
     dims: {
       width: 0, height: 0,
       pixelsPerMm: 4,
@@ -620,24 +660,30 @@
     var dt = Math.min(0.1, (now - state.lastFrameTime) / 1000);
     state.lastFrameTime = now;
 
-    var samples = state.samples;
-    var n = samples.length;
-    var pps = state.dims.pixelsPerSecond;
+    // Si en pause : on ne avance ni le playhead ni le currentTime.
+    // On continue quand même de faire un render() pour garder le point de tête
+    // et la grille affichés (et pour reprendre instantanément à la désactivation
+    // de la pause).
+    if (!state.paused) {
+      var samples = state.samples;
+      var n = samples.length;
+      var pps = state.dims.pixelsPerSecond;
 
-    if (n > 0 && pps > 0) {
-      var newPixels = dt * pps;
-      var numSteps = Math.max(1, Math.ceil(newPixels));
-      for (var i = 1; i <= numSteps; i++) {
-        var fraction = i / numSteps;
-        var t = state.currentTime + dt * fraction;
-        var mv = getMvAtTime(state.beat, t);
-        var pixelX = Math.floor((state.playhead + newPixels * fraction) % n);
-        if (pixelX >= 0 && pixelX < n) {
-          samples[pixelX] = mv;
+      if (n > 0 && pps > 0) {
+        var newPixels = dt * pps;
+        var numSteps = Math.max(1, Math.ceil(newPixels));
+        for (var i = 1; i <= numSteps; i++) {
+          var fraction = i / numSteps;
+          var t = state.currentTime + dt * fraction;
+          var mv = getMvAtTime(state.beat, t);
+          var pixelX = Math.floor((state.playhead + newPixels * fraction) % n);
+          if (pixelX >= 0 && pixelX < n) {
+            samples[pixelX] = mv;
+          }
         }
+        state.playhead = (state.playhead + newPixels) % n;
+        state.currentTime += dt;
       }
-      state.playhead = (state.playhead + newPixels) % n;
-      state.currentTime += dt;
     }
 
     render();
@@ -708,6 +754,43 @@
   var hrSlider = document.getElementById('hr-slider');
   hrSlider.addEventListener('input', function (e) {
     selectHr(Number(e.target.value));
+  });
+
+  // ===== Bouton Pause =====
+  // Bascule l'état de pause : quand paused = true, la boucle d'animation
+  // continue de tourner (pour rester réactif) mais n'avance plus le playhead
+  // ni le currentTime — le tracé reste figé pour permettre la lecture et le
+  // calcul du rythme. Le bouton change d'icône (⏸ → ▶) et de style.
+  var pauseBtn = document.getElementById('pause-btn');
+  function togglePause() {
+    state.paused = !state.paused;
+    if (state.paused) {
+      pauseBtn.textContent = '▶';
+      pauseBtn.classList.add('paused');
+      pauseBtn.setAttribute('aria-pressed', 'true');
+      pauseBtn.setAttribute('aria-label', 'Reprendre le balayage de la trace');
+    } else {
+      pauseBtn.textContent = '⏸';
+      pauseBtn.classList.remove('paused');
+      pauseBtn.setAttribute('aria-pressed', 'false');
+      pauseBtn.setAttribute('aria-label', 'Mettre en pause le balayage de la trace');
+      // Réinitialise lastFrameTime pour éviter un saut quand on reprend
+      // (dt serait sinon égal au temps de pause, ce qui ferait avancer le
+      // playhead d'un coup).
+      state.lastFrameTime = 0;
+    }
+  }
+  pauseBtn.addEventListener('click', togglePause);
+
+  // Raccourci clavier : Espace pour pause/reprise
+  // (sauf si le focus est sur un input/slider pour ne pas interférer)
+  document.addEventListener('keydown', function (e) {
+    if (e.key === ' ' || e.key === 'Spacebar') {
+      var tag = (e.target.tagName || '').toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+      e.preventDefault();
+      togglePause();
+    }
   });
 
   state.beat = generateBeat(state.lead, state.hr, state.qrsInterval);

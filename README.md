@@ -9,7 +9,7 @@ Bienvenue sur le dépôt officiel de PMSS. Nous proposons des applications web d
 La simulation haute fidélité ne devrait pas nécessiter un budget important ni un accès constant à Internet. Chaque application de ce dépôt est :
 
 - **100 % hors ligne :** Fonctionne parfaitement sans connexion Internet.
-- **Légère :** Chaque application est un fichier HTML autonome, généralement sous 2 Mo.
+- **Légère :** Chaque application est un fichier HTML autonome, généralement sous 200 Ko.
 - **Universelle :** Fonctionne sur tout appareil doté d'un navigateur moderne — PC, tablette, smartphone.
 - **Gratuite :** Sous licence CC BY 4.0, y compris pour un usage commercial (avec attribution).
 
@@ -23,6 +23,7 @@ La simulation haute fidélité ne devrait pas nécessiter un budget important ni
 | **Cartographie des électrodes** | Visualisez le placement des dérivations ECG et la cartographie des électrodes. | [Ouvrir l'application](carto-electrode.html) |
 | **Étiqueteur d'ondes** | Entraînez-vous à identifier les ondes P, QRS et T sur les tracés ECG. | [Ouvrir l'application](etiqueteur-ondes.html) |
 | **Trouver l'erreur** | Entraînement diagnostique pour repérer les anomalies dans les tracés ECG. | [Ouvrir l'application](trouver-erreur.html) |
+| **ECG-anomalies** | Quiz diagnostique avancé : 17 anomalies ECG critiques (STEMI, Brugada, Torsades, etc.) à identifier sur 12 dérivations. | [Ouvrir l'application](ecg-anomalies.html) |
 
 *D'autres simulations (respirateurs artificiels, moniteurs, pousse-seringues) arriveront bientôt !*
 

@@ -955,7 +955,8 @@
   var state = {
     paused: false,
     currentAnomaly: null,
-    answered: false
+    answered: false,
+    recentAnomalies: []  // hidden — garde-mémoire des 5 dernières anomalies pour éviter les répétitions consécutives
   };
 
   function createDisplay(canvas, leadId) {
@@ -1153,10 +1154,22 @@
     return a;
   }
 
-  // Pick a random anomaly — no tracking, no sequence. Each load is independent.
-  // Repetition is OK and expected (true random with 18 items).
+  // Pick a random anomaly, excluding the last 5 shown (hidden from user).
+  // This prevents consecutive repetition while keeping selection random.
+  // If all 18 anomalies are in the recent list (impossible with 5-deep memory
+  // but defensive), fall back to pure random.
   function pickRandomAnomaly() {
-    return ANOMALIES[Math.floor(Math.random() * ANOMALIES.length)];
+    var available = ANOMALIES.filter(function (a) {
+      return state.recentAnomalies.indexOf(a.id) === -1;
+    });
+    if (available.length === 0) available = ANOMALIES;
+    var picked = available[Math.floor(Math.random() * available.length)];
+    // Mettre à jour l'historique (max 5)
+    state.recentAnomalies.push(picked.id);
+    if (state.recentAnomalies.length > 5) {
+      state.recentAnomalies.shift();
+    }
+    return picked;
   }
 
   function generateChoices(correctAnomaly) {

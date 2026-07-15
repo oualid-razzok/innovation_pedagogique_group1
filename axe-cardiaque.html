@@ -22,7 +22,7 @@
     overflow: hidden;
   }
 
-  /* ===== Conteneur principal (responsive, pas de taille fixe) ===== */
+  /* ===== Conteneur principal ===== */
   .app {
     width: 100%;
     max-width: 1200px;
@@ -88,7 +88,7 @@
     border: 1px solid #e5e5e5;
   }
 
-  /* ===== Grille principale : diagramme | ECG ===== */
+  /* ===== Grille principale  ===== */
   .main-grid {
     flex: 1 1 0;
     min-height: 0;
@@ -102,7 +102,7 @@
     }
   }
 
-  /* ===== Panneau diagramme (gauche) ===== */
+  /* ===== Panneau diagramme ===== */
   .diagram-panel {
     padding: 16px;
     border-right: 1px solid #e5e5e5;
@@ -166,7 +166,7 @@
     color: #404040;
   }
 
-  /* ===== Panneau ECG (droite) ===== */
+  /* ===== Panneau ECG ===== */
   .ecg-panel {
     display: flex;
     flex-direction: column;
@@ -254,14 +254,14 @@
               </marker>
             </defs>
 
-            <!-- Cercle extérieur (référence hexaxiale) -->
+            <!-- Cercle extérieur  -->
             <circle cx="0" cy="0" r="140" fill="#fff8fa" stroke="#e5e5e5" stroke-width="1"/>
 
             <!-- Arc vert indiquant la plage d'axe normal (-30° à +90°) -->
             <path id="normal-arc" fill="none" stroke="#22c55e" stroke-width="3"
                   stroke-linecap="round" opacity="0.35"/>
 
-            <!-- Lignes d'axes des dérivations (tirets gris) -->
+            <!-- Lignes d'axes des dérivations  -->
             <g id="lead-axes" stroke="#d4d4d4" stroke-width="1"></g>
 
             <!-- Étiquettes des dérivations -->
@@ -277,7 +277,7 @@
                     fill="#fee2e2" stroke="#dc2626" stroke-width="1.5"/>
             </g>
 
-            <!-- Flèche de l'axe (mise à jour dynamiquement) -->
+            <!-- Flèche de l'axe  -->
             <g id="axis-arrow">
               <circle cx="0" cy="0" r="5" fill="#dc2626"/>
               <line id="arrow-line" x1="0" y1="0" x2="0" y2="-125"
@@ -301,11 +301,6 @@
 <script>
 (function () {
   'use strict';
-
-  /* ============================================================================
-   * Définitions des dérivations frontales et de leurs angles hexaxiaux
-   * Convention clinique : 0° = gauche du patient, +90° = vers les pieds
-   * ========================================================================== */
   var FRONTAL_LEADS = [
     { id: 'I',   label: 'DI',  angle: 0    },
     { id: 'aVL', label: 'aVL', angle: -30  },
@@ -315,7 +310,7 @@
     { id: 'aVR', label: 'aVR', angle: -150 }
   ];
 
-  // Coefficients de base par dérivation (portés de baseLeadCoeff)
+  // Coefficients de base par dérivation 
   // Colonnes : QRST, P, Q, R, S, J, T, PR, ST, TP
   var WP = { QRST:0, P:1, Q:2, R:3, S:4, J:5, T:6, PR:7, ST:8, TP:9 };
 
@@ -327,11 +322,7 @@
     aVL: [0.2,  -1.0,  0.3,  0.2,  0.4,  0.3,  0.6,  0,   0,   0],
     aVF: [0.8,   0.7,  0.8,  0.8,  0.8,  0.8,  0.4,  0,   0,   0]
   };
-
-  /* ============================================================================
-   * Génération de la forme d'onde — portée de Infirmary Integrated
-   * ========================================================================== */
-
+  
   function bezier(p0, p1, p2, pct) {
     var inv = 1 - pct;
     return {
@@ -377,23 +368,6 @@
     return out;
   }
 
-  /* Génère un battement pour une dérivation, modulé par l'axe cardiaque.
-   *
-   * axisCoeff = cos(angle_axe - angle_dérivation) — projection du vecteur
-   * cardiaque sur l'axe de la dérivation. Quand axisCoeff est négatif, tout
-   * le complexe s'inverse (R devient S, etc.). Quand axisCoeff ≈ 0, le complexe
-   * devient biphasique isovoltique : en clinique, une dérivation perpendiculaire
-   * à l'axe cardiaque ne montre JAMAIS un tracé parfaitement plat — le front de
-   * dépolarisation traverse la dérivation, ce qui produit un petit QRS biphasique
-   * (petit R suivi d'un petit S d'amplitude à peu près égale, aire nette ≈ 0).
-   *
-   * On modélise donc une activité résiduelle qui :
-   *   - est maximale quand |axisCoeff| → 0 (perpendiculaire)
-   *   - s'annule quand |axisCoeff| → 1 (parallèle, la projection domine)
-   *   - est appliquée aux ondes R (positive) et S (négative) pour créer le
-   *     pattern biphasique attendu ; les ondes P et T (monophasiques) restent
-   *     multipliées par axisCoeff car elles s'annulent naturellement quand
-   *     la dérivation est perpendiculaire (ce qui est cliniquement correct). */
   function generateBeat(lead, axisCoeff, hr, qrsInterval) {
     hr = hr || 80;
     qrsInterval = qrsInterval || 0.08;
@@ -422,33 +396,17 @@
         };
       }
     }
-
-    // Activité résiduelle : (1 - |axisCoeff|)² produit une courbe en cloche
-    // qui vaut 1 quand axisCoeff = 0 et ~0 dès que |axisCoeff| > 0.4.
-    // Borné à RESIDUAL_AMP mV (≈ 0,08 mV) — assez pour être visible, pas
-    // assez pour dominer quand la projection principale est non nulle.
     var RESIDUAL_AMP = 0.08;
     var residual = Math.pow(1 - Math.abs(axisCoeff), 2) * RESIDUAL_AMP;
-    // Le signe de la résiduelle suit le signe naturel du R de la dérivation :
-    // si coeff[R] > 0, la résiduelle crée un petit R positif puis un petit S
-    // négatif ; si coeff[R] < 0 (déjà inversée, ex. aVR), c'est l'inverse.
     var rSign = coeff[WP.R] >= 0 ? 1 : -1;
 
-    // Ondes P et T : multipliées par axisCoeff uniquement (monophasiques,
-    // s'annulent naturellement quand la dérivation est perpendiculaire).
+  
     append(peak((pr * 2) / 3, 0.1 * coeff[WP.P] * axisCoeff, 0, cursor.mv));
     append(line(pr / 3, 0 + coeff[WP.PR], cursor.mv));
-
-    // QRS : projection principale (axisCoeff) + résiduelle biphasique.
-    // Q : pas de résiduelle (le Q est déjà petit et négatif).
     append(line(qrsInterval / 4, -0.05 * coeff[WP.Q] * axisCoeff, cursor.mv));
-    // R : projection + résiduelle positive.
     append(line(qrsInterval / 4, (0.9 * coeff[WP.R] * axisCoeff) + (residual * rSign), cursor.mv));
-    // S : projection - résiduelle négative (équilibre approximativement le R).
     append(line(qrsInterval / 4, (-0.3 * coeff[WP.S] * axisCoeff) - (residual * 0.7 * rSign), cursor.mv));
-    // J : pas de résiduelle.
     append(line(qrsInterval / 4, -0.1 * coeff[WP.J] * axisCoeff, cursor.mv));
-
     append(line(stSegment, 0 + coeff[WP.ST], cursor.mv));
     append(peak(tInterval, 0.2 * coeff[WP.T] * axisCoeff, 0, cursor.mv));
 
@@ -479,7 +437,7 @@
   }
 
   /* ============================================================================
-   * Afficheurs ECG (6 instances, boucle d'animation partagée)
+   * Afficheurs ECG 
    * ========================================================================== */
 
   var VISIBLE_SECONDS = 4;   // fenêtre affichée
@@ -550,7 +508,7 @@
     var dim = d.dims;
     var w = dim.width, h = dim.height, pxmm = dim.pixelsPerMm;
 
-    // Petits carreaux (1 mm) — rose très clair
+    // Petits carreaux (1 mm) rose très clair
     d.ctx.strokeStyle = '#ffc7d4';
     d.ctx.lineWidth = 0.5;
     d.ctx.beginPath();
@@ -564,7 +522,7 @@
     }
     d.ctx.stroke();
 
-    // Grands carreaux (5 mm) — rose un peu plus soutenu
+    // Grands carreaux (5 mm) rose un peu plus soutenu
     d.ctx.strokeStyle = '#f78da3';
     d.ctx.lineWidth = 1;
     d.ctx.beginPath();
@@ -656,9 +614,6 @@
     return 'Axe extrême';
   }
 
-  /* Met à jour l'axe : régénère les formes d'onde SANS effacer les tampons
-   * d'échantillons — la transition se fait progressivement à mesure que les
-   * nouveaux échantillons remplacent les anciens (effet de balayage). */
   function setAxisAngle(angle) {
     while (angle > 180) angle -= 360;
     while (angle <= -180) angle += 360;
@@ -673,8 +628,6 @@
 
     updateArrow(angle);
 
-    // Régénère les battements pour les 6 dérivations avec le nouveau coefficient
-    // IMPORTANT : ne pas réinitialiser playhead ni effacer les samples
     displays.forEach(function (d) {
       var axisCoeff = Math.cos((angle - d.leadAngle) * Math.PI / 180);
       d.axisCoeff = axisCoeff;
@@ -689,10 +642,6 @@
   var SVG_NS = 'http://www.w3.org/2000/svg';
   var DIAGRAM_RADIUS = 140;
 
-  // Convertit un angle clinique en coordonnées SVG.
-  // Convention « vue patient » : 0° (DI) → DROITE, +90° (aVF) → BAS.
-  // Le côté droit du diagramme correspond au côté gauche du patient
-  // (comme si l'on regardait le patient de face).
   function angleToSVG(angle, radius) {
     var rad = angle * Math.PI / 180;
     return {
@@ -725,7 +674,6 @@
       labelsGroup.appendChild(text);
     });
 
-    // Arc vert pour la plage d'axe normal (-30° à +90°)
     var arcStart = angleToSVG(-30, DIAGRAM_RADIUS);
     var arcEnd = angleToSVG(90, DIAGRAM_RADIUS);
     // sweep-flag=0 : sens antihoraire en SVG = angle clinique croissant
@@ -742,7 +690,6 @@
     line.setAttribute('y2', tip.y);
   }
 
-  // Gestion du glisser (souris + tactile via pointer events)
   function setupDrag() {
     var svg = document.getElementById('hexaxial-svg');
     var dragging = false;
@@ -776,7 +723,6 @@
     window.addEventListener('pointerup', onPointerUp);
     window.addEventListener('pointercancel', onPointerUp);
 
-    // Clavier : flèches gauche/droite pour ajuster par 5°
     svg.addEventListener('keydown', function (e) {
       var delta = 0;
       if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') delta = -5;
@@ -788,7 +734,7 @@
   }
 
   /* ============================================================================
-   * Construction du panneau ECG (6 lignes)
+   * Construction du panneau ECG 
    * ========================================================================== */
 
   function buildECGPanel() {
@@ -829,7 +775,7 @@
   }
 
   /* ============================================================================
-   * Boucle d'animation partagée (un seul requestAnimationFrame pour les 6)
+   * Boucle d'animation partagée 
    * ========================================================================== */
 
   var lastFrameTime = 0;
@@ -839,8 +785,8 @@
     var dt = Math.min(0.1, (now - lastFrameTime) / 1000);
     lastFrameTime = now;
 
-    sharedTime += dt;  // temps partagé → les 6 dérivations restent synchronisées
-
+    sharedTime += dt; 
+    
     displays.forEach(function (d) {
       updateDisplay(d, dt);
       renderDisplay(d);
@@ -856,15 +802,13 @@
   buildDiagram();
   buildECGPanel();
 
-  // Initialise les dimensions des canvases et les formes d'onde initiales
   displays.forEach(function (d) {
     setupDisplay(d);
   });
-  setAxisAngle(state.axisAngle);  // calcule les axisCoeff et génère les battements
+  setAxisAngle(state.axisAngle);  
 
   setupDrag();
 
-  // Observe les redimensionnements
   if (window.ResizeObserver) {
     var ro = new ResizeObserver(function () {
       displays.forEach(setupDisplay);

@@ -158,24 +158,6 @@
     box-shadow: 0 1px 2px rgba(0,0,0,0.1);
   }
 
-  .icon-btn {
-    width: 36px; height: 36px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 16px;
-    background: var(--bg-elev);
-    border: 1px solid var(--border-strong);
-    border-radius: 8px;
-    cursor: pointer;
-    color: var(--text-primary);
-    transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
-    padding: 0; line-height: 1;
-    flex: 0 0 auto;
-  }
-  .icon-btn:hover { background: var(--bg-elev-hover); border-color: var(--text-secondary); }
-  .icon-btn:active { transform: scale(0.95); }
-  .icon-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-  .icon-btn.paused { background: var(--text-primary); color: var(--bg-panel); border-color: var(--text-primary); }
-
   /* ===== Curseur FC ===== */
   .hr-control {
     margin-top: 8px;
@@ -263,197 +245,10 @@
     .lead-grid {
       grid-template-columns: repeat(4, 1fr);
     }
-    .icon-btn { width: 32px; height: 32px; font-size: 14px; }
   }
-</style>
-<style>
-/* ===== PMSS Theme + Shortcuts module ===== */
-:root {
-  --pmss-bg-app: #f5f5f5;
-  --pmss-bg-panel: #ffffff;
-  --pmss-bg-elev: #f5f5f5;
-  --pmss-bg-elev-hover: #e5e5e5;
-  --pmss-text-primary: #1a1a1a;
-  --pmss-text-secondary: #737373;
-  --pmss-border: #e5e5e5;
-  --pmss-border-strong: #d4d4d4;
-  --pmss-trace: #0a0a0a;
-  --pmss-paper-bg: #fff8fa;
-  --pmss-paper-minor: #ffc7d4;
-  --pmss-paper-major: #f78da3;
-  --pmss-accent: #dc2626;
-}
-body.pmss-sombre {
-  --pmss-bg-app: #0a0a0a;
-  --pmss-bg-panel: #1a1a1a;
-  --pmss-bg-elev: #262626;
-  --pmss-bg-elev-hover: #333333;
-  --pmss-text-primary: #f5f5f5;
-  --pmss-text-secondary: #a3a3a3;
-  --pmss-border: #2a2a2a;
-  --pmss-border-strong: #404040;
-  --pmss-trace: #e5e5e5;
-  --pmss-paper-bg: #0d0d0d;
-  --pmss-paper-minor: #2a1a1f;
-  --pmss-paper-major: #3d2530;
-  --pmss-accent: #ef4444;
-  background: var(--pmss-bg-app) !important;
-  color: var(--pmss-text-primary) !important;
-}
-body.pmss-sombre html, body.pmss-sombre { background: #0a0a0a !important; }
-body.pmss-sombre .ecg-widget,
-body.pmss-sombre main,
-body.pmss-sombre .app-card,
-body.pmss-sombre .card,
-body.pmss-sombre .panel,
-body.pmss-sombre header,
-body.pmss-sombre .ecg-header,
-body.pmss-sombre .ecg-controls {
-  background: var(--pmss-bg-panel) !important;
-  color: var(--pmss-text-primary) !important;
-}
-body.pmss-sombre h1, body.pmss-sombre h2, body.pmss-sombre h3,
-body.pmss-sombre .ecg-title h1, body.pmss-sombre .lead-name,
-body.pmss-sombre .value, body.pmss-sombre .hr-value {
-  color: var(--pmss-text-primary) !important;
-}
-body.pmss-sombre .subtitle, body.pmss-sombre .unit,
-body.pmss-sombre .lead-desc, body.pmss-sombre .scale-anno,
-body.pmss-sombre .ecg-title .subtitle {
-  color: var(--pmss-text-secondary) !important;
-}
-body.pmss-sombre .ecg-header, body.pmss-sombre .ecg-controls,
-body.pmss-sombre .app-card, body.pmss-sombre header.app-header {
-  border-color: var(--pmss-border) !important;
-}
-body.pmss-sombre .lead-btn, body.pmss-sombre .pause-btn,
-body.pmss-sombre button {
-  background: var(--pmss-bg-elev) !important;
-  color: var(--pmss-text-primary) !important;
-  border-color: var(--pmss-border-strong) !important;
-}
-body.pmss-sombre .lead-btn:hover, body.pmss-sombre .pause-btn:hover {
-  background: var(--pmss-bg-elev-hover) !important;
-}
-body.pmss-sombre .lead-btn.active, body.pmss-sombre .pause-btn.paused {
-  background: var(--pmss-text-primary) !important;
-  color: var(--pmss-bg-panel) !important;
-}
-body.pmss-sombre input[type="range"] {
-  background: var(--pmss-border) !important;
-}
-body.pmss-sombre input[type="range"]::-webkit-slider-thumb {
-  background: var(--pmss-text-primary) !important;
-  border-color: var(--pmss-bg-panel) !important;
-}
-body.pmss-sombre .btn {
-  background: var(--pmss-text-primary) !important;
-  color: var(--pmss-bg-panel) !important;
-}
-body.pmss-sombre .btn.secondary {
-  background: var(--pmss-bg-elev) !important;
-  color: var(--pmss-text-primary) !important;
-}
-body.pmss-sombre footer {
-  color: var(--pmss-text-secondary) !important;
-}
-
-/* Floating toolbar */
-#pmss-toolbar {
-  position: fixed;
-  top: 10px;
-  right: 10px;
-  z-index: 9999;
-  display: flex;
-  gap: 4px;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-}
-#pmss-toolbar button {
-  width: 34px; height: 34px;
-  display: inline-flex; align-items: center; justify-content: center;
-  background: var(--pmss-bg-panel, #fff);
-  border: 1px solid var(--pmss-border-strong, #d4d4d4);
-  border-radius: 6px;
-  cursor: pointer;
-  color: var(--pmss-text-primary, #1a1a1a);
-  font-size: 14px;
-  padding: 0;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.12);
-  transition: background-color 0.15s ease, transform 0.1s ease;
-}
-#pmss-toolbar button:hover {
-  background: var(--pmss-bg-elev-hover, #e5e5e5);
-  transform: translateY(-1px);
-}
-#pmss-toolbar button:focus-visible {
-  outline: 2px solid var(--pmss-text-primary, #1a1a1a);
-  outline-offset: 1px;
-}
-body.pmss-sombre #pmss-toolbar button {
-  background: #1a1a1a;
-  border-color: #404040;
-  color: #f5f5f5;
-}
-body.pmss-sombre #pmss-toolbar button:hover { background: #333333; }
-
-/* Shortcuts overlay */
-#pmss-shortcuts-overlay {
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,0.5);
-  display: flex; align-items: center; justify-content: center;
-  z-index: 10000; opacity: 0; pointer-events: none;
-  transition: opacity 0.2s;
-}
-#pmss-shortcuts-overlay.visible { opacity: 1; pointer-events: auto; }
-#pmss-shortcuts-card {
-  background: var(--pmss-bg-panel, #fff);
-  color: var(--pmss-text-primary, #1a1a1a);
-  padding: 24px 28px;
-  border-radius: 10px;
-  max-width: 460px; width: 90%;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-}
-#pmss-shortcuts-card h2 { font-size: 16px; margin-bottom: 12px; }
-.pmss-shortcuts-list { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 18px; }
-.pmss-shortcut-item {
-  display: flex; justify-content: space-between; align-items: baseline;
-  padding: 5px 0; border-bottom: 1px solid var(--pmss-border, #e5e5e5);
-  font-size: 12px;
-}
-.pmss-shortcut-item .key {
-  font-family: ui-monospace, "SF Mono", Menlo, monospace;
-  background: var(--pmss-bg-elev, #f5f5f5);
-  padding: 1px 6px;
-  border-radius: 3px;
-  border: 1px solid var(--pmss-border-strong, #d4d4d4);
-  font-size: 11px;
-}
-.pmss-shortcuts-close {
-  margin-top: 16px; text-align: center;
-  font-size: 11px; color: var(--pmss-text-secondary, #737373);
-}
-
 </style>
 </head>
 <body>
-<div id="pmss-toolbar">
-</div>
-<div id="pmss-shortcuts-overlay">
-  <div id="pmss-shortcuts-card">
-    <h2>Raccourcis clavier</h2>
-    <div class="pmss-shortcuts-list">
-      <div class="pmss-shortcut-item"><span>Pause / Reprise</span><span class="key">Espace</span></div>
-      <div class="pmss-shortcut-item"><span>Cycler thème</span><span class="key">D</span></div>
-      <div class="pmss-shortcut-item"><span>Enregistrer PNG</span><span class="key">S</span></div>
-      <div class="pmss-shortcut-item"><span>Réinitialiser</span><span class="key">R</span></div>
-      <div class="pmss-shortcut-item"><span>Aide</span><span class="key">?</span></div>
-      <div class="pmss-shortcut-item"><span>Fermer</span><span class="key">Échap</span></div>
-    </div>
-    <div class="pmss-shortcuts-close">Appuyez sur ? ou Échap pour fermer</div>
-  </div>
-</div>
-
   <main>
     <div class="ecg-widget" role="application" aria-label="Simulateur ECG 12 dérivations">
       <!-- En-tête : titre + fréquence cardiaque -->
@@ -466,9 +261,6 @@ body.pmss-sombre #pmss-toolbar button:hover { background: #333333; }
           <span class="value" id="hr-value">80</span>
           <span class="unit">bpm</span>
         </div>
-		<div class="header-controls">
-		  <button type="button" id="pmss-theme-btn" class="icon-btn"aria-label="Basculer thème Clair/Sombre" title="Thème (D)">◐</button>
-		</div>
       </header>
 
       <!-- Canvas ECG + superpositions -->
@@ -750,7 +542,7 @@ body.pmss-sombre #pmss-toolbar button:hover { background: #333333; }
     var w = d.width, h = d.height, pxmm = d.pixelsPerMm;
 
     // Petits carreaux (1 mm) rose très clair
-    ctx.strokeStyle = pmssGetCss('--pmss-paper-minor', '#ffc7d4');
+    ctx.strokeStyle = '#ffc7d4';
     ctx.lineWidth = 0.5;
     ctx.beginPath();
     for (var x = 0; x <= w + 0.5; x += pxmm) {
@@ -764,7 +556,7 @@ body.pmss-sombre #pmss-toolbar button:hover { background: #333333; }
     ctx.stroke();
 
     // Grands carreaux (5 mm) rose un peu plus soutenu
-    ctx.strokeStyle = pmssGetCss('--pmss-paper-major', '#f78da3');
+    ctx.strokeStyle = '#f78da3';
     ctx.lineWidth = 1;
     ctx.beginPath();
     var big = pxmm * 5;
@@ -785,13 +577,13 @@ body.pmss-sombre #pmss-toolbar button:hover { background: #333333; }
     var w = d.width, h = d.height, pxmv = d.pixelsPerMv, cy = d.centerY;
 
     // Fond — rose crème doux
-    ctx.fillStyle = pmssGetCss('--pmss-paper-bg', '#fff8fa');
+    ctx.fillStyle = '#fff8fa';
     ctx.fillRect(0, 0, w, h);
 
     drawGrid();
 
     // Trace — encre profonde 
-    ctx.strokeStyle = pmssGetCss('--pmss-trace', '#0a0a0a');
+    ctx.strokeStyle = '#0a0a0a';
     ctx.lineWidth = 1.4;
     ctx.lineJoin = 'round';
     ctx.lineCap = 'round';
@@ -812,7 +604,7 @@ body.pmss-sombre #pmss-toolbar button:hover { background: #333333; }
       var newestIdx = (playhead - 1 + n) % n;
       var newestMv = samples[newestIdx];
       var newestY = cy - newestMv * pxmv;
-      ctx.fillStyle = pmssGetCss('--pmss-trace', '#0a0a0a');
+      ctx.fillStyle = '#0a0a0a';
       ctx.beginPath();
       ctx.arc(w - 1, newestY, 2, 0, Math.PI * 2);
       ctx.fill();
@@ -935,126 +727,6 @@ body.pmss-sombre #pmss-toolbar button:hover { background: #333333; }
     window.addEventListener('resize', setupCanvas);
   }
   requestAnimationFrame(frame);
-})();
-</script>
-<script>
-(function () {
-  'use strict';
-  // ===== THÈME (toujours démarrer en Clair) =====
-  function pmssSetTheme(name) {
-    if (name === 'sombre') document.body.classList.add('pmss-sombre');
-    else document.body.classList.remove('pmss-sombre');
-    // Notifier le canvas de redessiner si nécessaire
-    window.dispatchEvent(new CustomEvent('pmss-theme-change', { detail: { theme: name } }));
-  }
-  function pmssCycleTheme() {
-    pmssSetTheme(document.body.classList.contains('pmss-sombre') ? 'clair' : 'sombre');
-  }
-  document.getElementById('pmss-theme-btn').addEventListener('click', pmssCycleTheme);
-
-  // Helper pour lire les variables CSS depuis le canvas
-  window.pmssGetCss = function (varName, fallback) {
-    var v = getComputedStyle(document.body).getPropertyValue(varName).trim();
-    return v || fallback;
-  };
-  window.pmssIsSombre = function () { return document.body.classList.contains('pmss-sombre'); };
-
-  // ===== OVERLAY RACCOURCIS =====
-  var overlay = document.getElementById('pmss-shortcuts-overlay');
-  function pmssToggleShortcuts() { overlay.classList.toggle('visible'); }
-  document.getElementById('pmss-help-btn').addEventListener('click', pmssToggleShortcuts);
-  overlay.addEventListener('click', function (e) {
-    if (e.target === overlay) overlay.classList.remove('visible');
-  });
-
-  // ===== SAVE PNG — cherche tous les canvas et combine =====
-  function pmssSavePng() {
-    var canvases = document.querySelectorAll('canvas');
-    if (canvases.length === 0) {
-      alert('Aucun canvas à enregistrer sur cette page.');
-      return;
-    }
-    // Si un seul canvas, on l'enregistre directement
-    if (canvases.length === 1) {
-      var c = canvases[0];
-      var link = document.createElement('a');
-      link.download = 'pmss-' + (document.title || 'capture').replace(/[^a-z0-9]+/gi, '-').toLowerCase() + '-' + Date.now() + '.png';
-      link.href = c.toDataURL('image/png');
-      link.click();
-      return;
-    }
-    // Plusieurs canvas : on les combine verticalement
-    var maxW = 0, totalH = 0;
-    canvases.forEach(function (c) {
-      maxW = Math.max(maxW, c.width);
-      totalH += c.height + 10;
-    });
-    var tmp = document.createElement('canvas');
-    tmp.width = maxW;
-    tmp.height = totalH;
-    var tctx = tmp.getContext('2d');
-    tctx.fillStyle = pmssIsSombre() ? '#1a1a1a' : '#ffffff';
-    tctx.fillRect(0, 0, tmp.width, tmp.height);
-    var y = 0;
-    canvases.forEach(function (c) {
-      tctx.drawImage(c, 0, y);
-      y += c.height + 10;
-    });
-    var link = document.createElement('a');
-    link.download = 'pmss-' + (document.title || 'capture').replace(/[^a-z0-9]+/gi, '-').toLowerCase() + '-' + Date.now() + '.png';
-    link.href = tmp.toDataURL('image/png');
-    link.click();
-  }
-  document.getElementById('pmss-save-btn').addEventListener('click', pmssSavePng);
-
-  // ===== PAUSE — tente de basculer la pause de l'app existante =====
-  function pmssTogglePause() {
-    // Cherche un bouton de pause existant et clique dessus
-    var pauseBtn = document.getElementById('pause-btn') || document.querySelector('[aria-label*="pause" i], [aria-label*="Pause"]');
-    if (pauseBtn) { pauseBtn.click(); return true; }
-    // Sinon, dispatch un event pour les apps qui écoutent
-    window.dispatchEvent(new CustomEvent('pmss-toggle-pause'));
-    return false;
-  }
-
-  // ===== RESET — recharge la page =====
-  function pmssReset() {
-    if (confirm('Réinitialiser la simulation ?')) location.reload();
-  }
-
-  // ===== RACCOURCIS CLAVIER =====
-  function isTextInput(t) {
-    var tag = (t.tagName || '').toLowerCase();
-    return tag === 'input' || tag === 'textarea' || tag === 'select';
-  }
-  document.addEventListener('keydown', function (e) {
-    if (overlay.classList.contains('visible')) {
-      if (e.key === 'Escape' || e.key === '?') {
-        overlay.classList.remove('visible');
-        e.preventDefault();
-      }
-      return;
-    }
-    if (isTextInput(e.target)) return;
-    var k = e.key.toLowerCase();
-    if (e.key === ' ' || e.key === 'Spacebar') {
-      // Ne pas conflit avec un bouton de pause natif
-      var tag = (e.target.tagName || '').toLowerCase();
-      if (tag === 'button' || tag === 'a') return;
-      e.preventDefault();
-      pmssTogglePause();
-    } else if (k === 'd') {
-      pmssCycleTheme();
-    } else if (k === 's') {
-      e.preventDefault();
-      pmssSavePng();
-    } else if (k === 'r') {
-      pmssReset();
-    } else if (e.key === '?' || e.key === 'Help') {
-      e.preventDefault();
-      pmssToggleShortcuts();
-    }
-  });
 })();
 </script>
 </body>

@@ -1,0 +1,1343 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ECG sur papier — Bibliothèque 12 dérivations</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg-app: #f5f5f5;
+    --bg-panel: #ffffff;
+    --bg-elev: #f5f5f5;
+    --bg-elev-hover: #e5e5e5;
+    --text-primary: #1a1a1a;
+    --text-secondary: #737373;
+    --border: #e5e5e5;
+    --border-strong: #d4d4d4;
+    --paper-bg: #fff8fa;
+    --paper-minor: #ffc7d4;
+    --paper-major: #f78da3;
+    --trace: #0a0a0a;
+    --accent: #dc2626;
+  }
+  body.sombre {
+    --bg-app: #1f1f1f;
+    --bg-panel: #2a2a2a;
+    --bg-elev: #333333;
+    --bg-elev-hover: #404040;
+    --text-primary: #f0f0f0;
+    --text-secondary: #b0b0b0;
+    --border: #3a3a3a;
+    --border-strong: #555555;
+    --paper-bg: #181818;
+    --paper-minor: #2a1a22;
+    --paper-major: #3d2530;
+    --trace: #f0f0f0;
+    --accent: #ef4444;
+  }
+
+  html, body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg-app);
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    height: 100%;
+  }
+  body { display: flex; flex-direction: column; }
+
+  header.app-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: var(--bg-panel);
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .app-title { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+  .app-title h1 { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+  .app-title .subtitle {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  @media (max-width: 540px) { .app-title .subtitle { display: none; } }
+
+  /* Toolbar — theme button only */
+  .toolbar { display: flex; align-items: center; gap: 8px; }
+  .theme-btn {
+    width: 36px; height: 36px;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--bg-elev);
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--text-primary);
+    font-size: 16px;
+    padding: 0;
+    transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+  }
+  .theme-btn:hover { background: var(--bg-elev-hover); border-color: var(--text-secondary); }
+  .theme-btn:active { transform: scale(0.95); }
+  .theme-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* Pathology selector */
+  .selector-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: var(--bg-panel);
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  .selector-row label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-secondary);
+    white-space: nowrap;
+  }
+  .pathology-select {
+    flex: 1;
+    min-width: 200px;
+    padding: 8px 10px;
+    background: var(--bg-elev);
+    color: var(--text-primary);
+    border: 1px solid var(--border-strong);
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: inherit;
+    cursor: pointer;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M2 4 L6 8 L10 4' stroke='%23737373' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 30px;
+  }
+  .pathology-select:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  .prev-next {
+    display: flex;
+    gap: 4px;
+  }
+  .nav-btn {
+    width: 36px; height: 36px;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--bg-elev);
+    border: 1px solid var(--border-strong);
+    border-radius: 6px;
+    cursor: pointer;
+    color: var(--text-primary);
+    font-size: 14px;
+    padding: 0;
+    transition: background-color 0.15s ease;
+  }
+  .nav-btn:hover { background: var(--bg-elev-hover); }
+  .nav-btn:active { transform: scale(0.95); }
+  .nav-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* Display */
+  .display {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px;
+    background: var(--bg-app);
+    -webkit-overflow-scrolling: touch;
+  }
+  .display-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+
+  /* En-tête patient */
+  .patient-header {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 22px;
+    padding: 4px 4px 12px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 12px;
+    font-size: 11px;
+    color: var(--text-secondary);
+  }
+  .patient-header .field { display: flex; gap: 6px; align-items: baseline; }
+  .patient-header .label { text-transform: uppercase; letter-spacing: 0.05em; font-size: 9px; }
+  .patient-header .val { color: var(--text-primary); font-family: ui-monospace, monospace; font-size: 12px; }
+  .patient-header .val.trace-name { font-weight: 600; }
+
+  .ecg-container {
+    position: relative;
+    background: var(--paper-bg);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .ecg-container canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+    touch-action: manipulation;
+  }
+
+  .display-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 12px;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .info { font-size: 11px; color: var(--text-secondary); }
+  .print-btn {
+    padding: 9px 18px;
+    font-size: 13px;
+    font-weight: 500;
+    background: var(--text-primary);
+    border: none;
+    border-radius: 6px;
+    color: var(--bg-panel);
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+    font-family: inherit;
+  }
+  .print-btn:hover { opacity: 0.85; }
+  .print-btn:active { transform: scale(0.98); }
+  .print-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* Print */
+  @media print {
+    body { background: white; }
+    header.app-header, .selector-row, .display-footer { display: none !important; }
+    .display { overflow: visible; padding: 0; background: white; }
+    .display-inner { max-width: none; margin: 0; border: none; box-shadow: none; padding: 0; }
+    .ecg-container { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+  <header class="app-header">
+    <div class="app-title">
+      <h1>ECG sur papier</h1>
+      <span class="subtitle">Bibliothèque 12 dérivations · imprimable</span>
+    </div>
+    <div class="toolbar">
+      <button type="button" class="theme-btn" id="theme-btn" aria-label="Basculer thème Clair/Sombre" title="Thème (D)">◐</button>
+    </div>
+  </header>
+
+  <div class="selector-row">
+    <label for="pathology-select">Tracé</label>
+    <select class="pathology-select" id="pathology-select" aria-label="Choisir un tracé ECG"></select>
+    <div class="prev-next">
+      <button type="button" class="nav-btn" id="prev-btn" aria-label="Tracé précédent" title="Précédent (←)">‹</button>
+      <button type="button" class="nav-btn" id="next-btn" aria-label="Tracé suivant" title="Suivant (→)">›</button>
+    </div>
+  </div>
+
+  <section class="display">
+    <div class="display-inner">
+      <div class="patient-header">
+        <div class="field"><span class="label">Nom</span><span class="val">______________</span></div>
+        <div class="field"><span class="label">Âge</span><span class="val">__</span></div>
+        <div class="field"><span class="label">Sexe</span><span class="val">__</span></div>
+        <div class="field"><span class="label">Date</span><span class="val" id="header-date">__</span></div>
+        <div class="field"><span class="label">Tracé</span><span class="val trace-name" id="header-name">Rythme sinusal normal</span></div>
+      </div>
+
+      <div class="ecg-container">
+        <canvas id="ecg-canvas" width="2500" height="1700"></canvas>
+      </div>
+
+      <div class="display-footer">
+        <div class="info">25 mm/s · 10 mm/mV · 12 dérivations · 2,5 s par dérivation</div>
+        <button type="button" class="print-btn" id="print-btn">Imprimer</button>
+      </div>
+    </div>
+  </section>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ========================================================================
+   * THÈME — Clair / Sombre (toujours démarrer en Clair)
+   * Sombre est en gris doux (#1f1f1f), pas noir pur, pour préserver la lisibilité.
+   * ====================================================================== */
+  function setTheme(name) {
+    if (name === 'sombre') document.body.classList.add('sombre');
+    else document.body.classList.remove('sombre');
+    redraw();
+  }
+  function cycleTheme() {
+    setTheme(document.body.classList.contains('sombre') ? 'clair' : 'sombre');
+  }
+  document.getElementById('theme-btn').addEventListener('click', cycleTheme);
+
+  /* ========================================================================
+   * GÉNÉRATEUR ECG — Port fidèle de Infirmary Integrated (Waveform.Draw.cs)
+   *
+   * Approche :
+   *  - Plotting.Peak (Bezier) pour P et T (courbes montée-descente douces)
+   *  - Plotting.Line (interpolation linéaire) pour Q, R, S, J, ST, PR, TP
+   *  - Coefficient matrix baseLeadCoeff exact (12 dérivations × 10 WaveParts)
+   *  - ST_Elevation et T_Elevation array par dérivation
+   *  - PR = lerp(0.16, 0.20, (HR-60)/(160-60))
+   *  - QT = (60/HR)^(1/3) * QTc    (Fridericia)
+   *  - ST = ST_interval/3, T = ST_interval*2/3
+   *  - QRS = 4 segments égaux (Q, R, S, J) chacun QRS_Interval/4
+   *  - Chaque battement est concatené au précédent, sans chevauchement
+   * ====================================================================== */
+  var SR = 250;       // Hz (Infirmary utilise 10 ms = 100 Hz effectif, on suréchantillonne)
+  var DUR = 2.5;      // secondes par dérivation (standard 4×3 layout)
+  var SAMPLES_PER_LEAD = SR * DUR;
+
+  // Gain 5 mm/mV (demi-déflection) — standard pour impression 12 dérivations 4×3
+  var GAIN_MM_PER_MV = 10;  // 10 mm/mV pleine échelle (standard ECG)
+
+  // Résolution temporelle Infirmary (10 ms par point) — utilisé pour Plotting.Peak/Line
+  var RESOLUTION_MS = 10;
+
+  /* ----------------------------------------------------------------------
+   * Plotting.Peak — courbe de Bézier montée (1/3) + descente (2/3)
+   * Port exact de Plotting.Peak dans Waveform.Plotting.cs
+   * Retourne un tableau de {t, mv} pour une onde donnée
+   * ---------------------------------------------------------------------- */
+  function bezier(startT, startMv, ctrlT, ctrlMv, endT, endMv, pct) {
+    var inv = 1 - pct;
+    return {
+      t:  startT  * inv * inv + 2 * ctrlT  * pct * inv + endT  * pct * pct,
+      mv: startMv * inv * inv + 2 * ctrlMv * pct * inv + endMv * pct * pct
+    };
+  }
+
+  function plottingPeak(length, mvPeak, mvEnd, startMv) {
+    if (length <= 0) return [];
+    var out = [];
+    var resolution = (2 * (RESOLUTION_MS / 1000)) / length;
+    // Montée : (0, startMv) → (length/3, mvPeak) → (length/2, mvPeak)
+    for (var i = 1; i * resolution <= 1; i++) {
+      var pct = i * resolution;
+      out.push(bezier(0, startMv, length / 3, mvPeak, length / 2, mvPeak, pct));
+    }
+    // Descente : (length/2, mvPeak) → (length*3/5, mvPeak) → (length, mvEnd)
+    for (var j = 1; j * resolution <= 1; j++) {
+      var pct = j * resolution;
+      out.push(bezier(length / 2, mvPeak, length * 3 / 5, mvPeak, length, mvEnd, pct));
+    }
+    out.push({ t: length, mv: mvEnd });
+    return out;
+  }
+
+  /* ----------------------------------------------------------------------
+   * Plotting.Line — interpolation linéaire
+   * Port exact de Plotting.Line dans Waveform.Plotting.cs
+   * ---------------------------------------------------------------------- */
+  function plottingLine(length, mv, startMv) {
+    if (length <= 0) return [];
+    var out = [];
+    var step = RESOLUTION_MS / 1000;
+    for (var t = step; t <= length; t += step) {
+      out.push({ t: t, mv: startMv + (mv - startMv) * (t / length) });
+    }
+    out.push({ t: length, mv: mv });
+    return out;
+  }
+
+  /* ----------------------------------------------------------------------
+   * Plotting.Curve — Bézier plate (pour VF, mais on ne l'utilise pas ici
+   * car le VF est géré séparément)
+   * ---------------------------------------------------------------------- */
+
+  /* ----------------------------------------------------------------------
+   * baseLeadCoeff — port EXACT de la matrice de Infirmary Integrated
+   * Index : [lead][WavePart] où WavePart = {QRST, P, Q, R, S, J, T, PR, ST, TP}
+   * Les 7 premières colonnes sont des multiplicateurs ; PR, ST, TP sont des additions (0 ici)
+   * ---------------------------------------------------------------------- */
+  var WP = { QRST: 0, P: 1, Q: 2, R: 3, S: 4, J: 5, T: 6, PR: 7, ST: 8, TP: 9 };
+
+  // Ordre Infirmary : I, II, III, aVR, aVL, aVF, V1, V2, V3, V4, V5, V6
+  var BASE_LEAD_COEFF = [
+    // QRST  P     Q     R     S     J     T     PR  ST   TP
+    [ 0.7,   0.7,  0.7,  0.7,  0.7,  0.7,  0.8,  0,   0,   0 ],   // I
+    [ 1.0,   1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  0,   0,   0 ],   // II
+    [ 0.5,   0.5,  0.5,  0.5,  0.5,  0.5,  0.2,  0,   0,   0 ],   // III
+    [-0.9,  -1.0, -1.0, -0.8, -1.0, -1.0, -0.9,  0,   0,   0 ],   // aVR
+    [ 0.2,  -1.0,  0.3,  0.2,  0.4,  0.3,  0.6,  0,   0,   0 ],   // aVL
+    [ 0.8,   0.7,  0.8,  0.8,  0.8,  0.8,  0.4,  0,   0,   0 ],   // aVF
+    [-1.0,   0.2, -0.7, -1.0,  0.0,  0.0,  0.3,  0,   0,   0 ],   // V1
+    [-1.2,   0.2, -1.8, -1.2,  0.0, -1.0,  1.4,  0,   0.1, 0 ],   // V2
+    [-1.4,   0.2, -3.0, -1.4,  0.0,  0.0,  1.8,  0,   0.1, 0 ],   // V3
+    [-0.8,   0.7, -9.0, -0.8,  0.0,  0.0,  1.4,  0,   0.1, 0 ],   // V4
+    [-0.2,   0.7,-10.0, -0.2,  0.0,  0.0,  1.0,  0,   0.1, 0 ],   // V5
+    [-0.1,   1.0, -9.0, -0.1,  0.0,  0.0,  0.8,  0,   0,   0 ]    // V6
+  ];
+
+  var LEADS = ['I', 'II', 'III', 'aVR', 'aVL', 'aVF', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6'];
+  // Disposition 4 colonnes × 3 rangées (standard d'impression ECG)
+  var LAYOUT = [
+    ['I', 'II', 'III', 'aVR'],
+    ['aVL', 'aVF', 'V1', 'V2'],
+    ['V3', 'V4', 'V5', 'V6']
+  ];
+
+  /* ----------------------------------------------------------------------
+   * Physiology defaults — port de Physiology.cs
+   * ---------------------------------------------------------------------- */
+  function clamp(x, lo, hi) { return Math.max(lo, Math.min(hi, x)); }
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  function inverseLerp(a, b, v) { return (v - a) / (b - a); }
+
+  // PR = lerp(0.16, 0.20, inverseLerp(60, 160, HR))  (Infirmary)
+  function getPR(hr) {
+    return lerp(0.16, 0.20, clamp(inverseLerp(60, 160, hr), 0, 1));
+  }
+  // QT = (60/HR)^(1/3) * QTc  (Fridericia)  — QTc par défaut 0.4 s
+  function getQT(hr, qtc) {
+    qtc = qtc || 0.4;
+    return Math.pow(60 / Math.max(1, hr), 1 / 3) * qtc;
+  }
+  function getSTInterval(hr, qrs, qtc) {
+    return Math.max(0, getQT(hr, qtc) - qrs);
+  }
+  function getSTSegment(hr, qrs, qtc) {
+    return getSTInterval(hr, qrs, qtc) * (1 / 3);
+  }
+  function getTInterval(hr, qrs, qtc) {
+    return getSTInterval(hr, qrs, qtc) * (2 / 3);
+  }
+  function getHRInterval(hr) {
+    return 60 / Math.max(1, hr);
+  }
+
+  /* ----------------------------------------------------------------------
+   * ECG_P, ECG_Q, ECG_R, ECG_S, ECG_J, ECG_T, ECG_PR, ECG_ST, ECG_TP
+   * Ports de Waveform.Draw.cs
+   * Chaque fonction retourne un tableau de {t, mv} pour UNE onde
+   * ---------------------------------------------------------------------- */
+  function ecgP(leadIdx, length, mvPeak, mvEnd, startMv) {
+    var coeff = BASE_LEAD_COEFF[leadIdx][WP.P];
+    return plottingPeak(length, mvPeak * coeff, mvEnd, startMv);
+  }
+  function ecgQ(leadIdx, length, mv, startMv, axisCoeff) {
+    axisCoeff = axisCoeff || 1;
+    var coeff = BASE_LEAD_COEFF[leadIdx][WP.Q] * axisCoeff;
+    return plottingLine(length, mv * coeff, startMv);
+  }
+  function ecgR(leadIdx, length, mv, startMv, axisCoeff) {
+    axisCoeff = axisCoeff || 1;
+    var coeff = BASE_LEAD_COEFF[leadIdx][WP.R] * axisCoeff;
+    return plottingLine(length, mv * coeff, startMv);
+  }
+  function ecgS(leadIdx, length, mv, startMv, axisCoeff) {
+    axisCoeff = axisCoeff || 1;
+    var coeff = BASE_LEAD_COEFF[leadIdx][WP.S] * axisCoeff;
+    return plottingLine(length, mv * coeff, startMv);
+  }
+  function ecgJ(leadIdx, length, mv, startMv, stElevation) {
+    var coeff = BASE_LEAD_COEFF[leadIdx][WP.J];
+    var add = stElevation || 0;
+    return plottingLine(length, (mv * coeff) + add, startMv);
+  }
+  function ecgT(leadIdx, length, mvPeak, mvEnd, startMv, tElevation) {
+    var coeff = BASE_LEAD_COEFF[leadIdx][WP.T];
+    var add = tElevation || 0;
+    return plottingPeak(length, (mvPeak * coeff) + add, mvEnd, startMv);
+  }
+  function ecgPR(leadIdx, length, mv, startMv) {
+    var add = BASE_LEAD_COEFF[leadIdx][WP.PR];
+    return plottingLine(length, mv + add, startMv);
+  }
+  function ecgST(leadIdx, length, mv, startMv, stElevation) {
+    var add = BASE_LEAD_COEFF[leadIdx][WP.ST];
+    var stElev = stElevation || 0;
+    return plottingLine(length, mv + add + stElev, startMv);
+  }
+  function ecgTP(leadIdx, length, mv, startMv) {
+    var add = BASE_LEAD_COEFF[leadIdx][WP.TP];
+    return plottingLine(length, mv + add, startMv);
+  }
+
+  /* ----------------------------------------------------------------------
+   * Concaténer des segments en un battement complet
+   * Port de Plotting.Concatenate : décale les temps et conserve le dernier mv
+   * ---------------------------------------------------------------------- */
+  function concatSegments(segments) {
+    var out = [];
+    var cursorT = 0;
+    var cursorMv = 0;
+    for (var s = 0; s < segments.length; s++) {
+      var seg = segments[s];
+      for (var i = 0; i < seg.length; i++) {
+        out.push({ t: cursorT + seg[i].t, mv: seg[i].mv });
+      }
+      if (seg.length > 0) {
+        cursorT += seg[seg.length - 1].t;
+        cursorMv = seg[seg.length - 1].mv;
+      }
+    }
+    return out;
+  }
+
+  /* ----------------------------------------------------------------------
+   * ECG_Complex__P_Normal — port de Waveform.Draw.cs
+   * P = Peak(PR*2/3, 0.1, 0)
+   * ---------------------------------------------------------------------- */
+  function buildPNormal(leadIdx, hr) {
+    var pr = getPR(hr);
+    return ecgP(leadIdx, (pr * 2) / 3, 0.1, 0, 0);
+  }
+
+  /* ----------------------------------------------------------------------
+   * ECG_Complex__QRST_Normal — port exact de Waveform.Draw.cs
+   * Q (QRS/4, -0.05) → R (QRS/4, 0.9) → S (QRS/4, -0.3) → J (QRS/4, -0.1)
+   * → ST (GetSTSegment, 0) → T (GetTInterval, 0.2)
+   * ---------------------------------------------------------------------- */
+  function buildQRSTNormal(leadIdx, hr, qrs, stElevation, tElevation) {
+    qrs = qrs || 0.08;
+    stElevation = stElevation || 0;
+    tElevation = tElevation || 0;
+    var segments = [];
+    var cursor = 0;
+    // Q
+    var qSeg = ecgQ(leadIdx, qrs / 4, -0.05, cursor);
+    segments.push(qSeg); cursor = qSeg.length ? qSeg[qSeg.length - 1].mv : 0;
+    // R
+    var rSeg = ecgR(leadIdx, qrs / 4, 0.9, cursor);
+    segments.push(rSeg); cursor = rSeg.length ? rSeg[rSeg.length - 1].mv : 0;
+    // S
+    var sSeg = ecgS(leadIdx, qrs / 4, -0.3, cursor);
+    segments.push(sSeg); cursor = sSeg.length ? sSeg[sSeg.length - 1].mv : 0;
+    // J
+    var jSeg = ecgJ(leadIdx, qrs / 4, -0.1, cursor, stElevation);
+    segments.push(jSeg); cursor = jSeg.length ? jSeg[jSeg.length - 1].mv : 0;
+    // ST segment
+    var stLen = getSTSegment(hr, qrs);
+    var stSeg = ecgST(leadIdx, stLen, 0, cursor, stElevation);
+    segments.push(stSeg); cursor = stSeg.length ? stSeg[stSeg.length - 1].mv : 0;
+    // T wave
+    var tLen = getTInterval(hr, qrs);
+    var tSeg = ecgT(leadIdx, tLen, 0.2, 0, cursor, tElevation);
+    segments.push(tSeg); cursor = tSeg.length ? tSeg[tSeg.length - 1].mv : 0;
+    return concatSegments(segments);
+  }
+
+  /* ----------------------------------------------------------------------
+   * ECG_Complex__QRST_BBB — Bundle Branch Block (port exact)
+   * Q (QRS/6, -0.1) → R (QRS/6, 0.9) → Q (QRS/6, 0.3) → R (QRS/6, 0.7)
+   * → S (QRS/6, -0.3) → J (QRS/6, -0.1) → ST → T (0.1)
+   * ---------------------------------------------------------------------- */
+  function buildQRSTBBB(leadIdx, hr, qrs) {
+    qrs = qrs || 0.16;  // QRS large pour BBB
+    var segments = [];
+    var cursor = 0;
+    var q1 = ecgQ(leadIdx, qrs / 6, -0.1, cursor);    segments.push(q1); cursor = q1.length ? q1[q1.length-1].mv : 0;
+    var r1 = ecgR(leadIdx, qrs / 6, 0.9, cursor);     segments.push(r1); cursor = r1.length ? r1[r1.length-1].mv : 0;
+    var q2 = ecgQ(leadIdx, qrs / 6, 0.3, cursor);     segments.push(q2); cursor = q2.length ? q2[q2.length-1].mv : 0;
+    var r2 = ecgR(leadIdx, qrs / 6, 0.7, cursor);     segments.push(r2); cursor = r2.length ? r2[r2.length-1].mv : 0;
+    var s  = ecgS(leadIdx, qrs / 6, -0.3, cursor);    segments.push(s);  cursor = s.length  ? s[s.length-1].mv  : 0;
+    var j  = ecgJ(leadIdx, qrs / 6, -0.1, cursor);    segments.push(j);  cursor = j.length  ? j[j.length-1].mv  : 0;
+    var stLen = getSTSegment(hr, qrs);
+    var stSeg = ecgST(leadIdx, stLen, 0, cursor);
+    segments.push(stSeg); cursor = stSeg.length ? stSeg[stSeg.length-1].mv : 0;
+    var tLen = getTInterval(hr, qrs);
+    var tSeg = ecgT(leadIdx, tLen, 0.1, 0, cursor);
+    segments.push(tSeg);
+    return concatSegments(segments);
+  }
+
+  /* ----------------------------------------------------------------------
+   * ECG_Complex__QRST_SVT — port exact
+   * Q (QRS/4, -0.1) → R (QRS/4, 0.9) → S (QRS/4, -0.3) → J (QRS/4, -0.1)
+   * → ST (GetSTSegment, -0.06) → T (GetTInterval, 0.15)
+   * ---------------------------------------------------------------------- */
+  function buildQRSTSVT(leadIdx, hr, qrs) {
+    qrs = qrs || 0.07;
+    var segments = [];
+    var cursor = 0;
+    var q = ecgQ(leadIdx, qrs / 4, -0.1, cursor); segments.push(q); cursor = q.length ? q[q.length-1].mv : 0;
+    var r = ecgR(leadIdx, qrs / 4, 0.9, cursor);  segments.push(r); cursor = r.length ? r[r.length-1].mv : 0;
+    var s = ecgS(leadIdx, qrs / 4, -0.3, cursor); segments.push(s); cursor = s.length ? s[s.length-1].mv : 0;
+    var j = ecgJ(leadIdx, qrs / 4, -0.1, cursor); segments.push(j); cursor = j.length ? j[j.length-1].mv : 0;
+    var stLen = getSTSegment(hr, qrs);
+    var stSeg = ecgST(leadIdx, stLen, -0.06, cursor);
+    segments.push(stSeg); cursor = stSeg.length ? stSeg[stSeg.length-1].mv : 0;
+    var tLen = getTInterval(hr, qrs);
+    var tSeg = ecgT(leadIdx, tLen, 0.15, 0, cursor);
+    segments.push(tSeg);
+    return concatSegments(segments);
+  }
+
+  /* ----------------------------------------------------------------------
+   * ECG_Complex__QRST_Aberrant_1 — port exact (used for AV block 3rd degree)
+   * Q (QRS/6, +0.1) → R (QRS/3, -0.9) → S (QRS/6, 0.3) → J (QRS/3, 0.1)
+   * → ST → T (0.1)
+   * ---------------------------------------------------------------------- */
+  function buildQRSTAberrant1(leadIdx, hr, qrs) {
+    qrs = qrs || 0.12;
+    var segments = [];
+    var cursor = 0;
+    var q = ecgQ(leadIdx, qrs / 6, 0.1, cursor);   segments.push(q); cursor = q.length ? q[q.length-1].mv : 0;
+    var r = ecgR(leadIdx, qrs / 3, -0.9, cursor);  segments.push(r); cursor = r.length ? r[r.length-1].mv : 0;
+    var s = ecgS(leadIdx, qrs / 6, 0.3, cursor);   segments.push(s); cursor = s.length ? s[s.length-1].mv : 0;
+    var j = ecgJ(leadIdx, qrs / 3, 0.1, cursor);   segments.push(j); cursor = j.length ? j[j.length-1].mv : 0;
+    var stLen = getSTSegment(hr, qrs);
+    var stSeg = ecgST(leadIdx, stLen, 0, cursor);
+    segments.push(stSeg); cursor = stSeg.length ? stSeg[stSeg.length-1].mv : 0;
+    var tLen = getTInterval(hr, qrs);
+    var tSeg = ecgT(leadIdx, tLen, 0.1, 0, cursor);
+    segments.push(tSeg);
+    return concatSegments(segments);
+  }
+
+  /* ----------------------------------------------------------------------
+   * Construire un battement complet pour un rythme sinusal :
+   * P_Normal → segment PR (reste = PR/3) → QRST_Normal → segment TP (jusqu'à HR interval)
+   * ---------------------------------------------------------------------- */
+  function buildSinusBeat(leadIdx, hr, qrs, stElevation, tElevation) {
+    var pr = getPR(hr);
+    var hri = getHRInterval(hr);
+    var segments = [];
+    var cursor = 0;
+    // P wave
+    var pSeg = buildPNormal(leadIdx, hr);
+    segments.push(pSeg); cursor = pSeg.length ? pSeg[pSeg.length-1].mv : 0;
+    // PR segment (reste de PR = PR/3, car P utilise PR*2/3)
+    var prSeg = ecgPR(leadIdx, pr / 3, 0, cursor);
+    segments.push(prSeg); cursor = prSeg.length ? prSeg[prSeg.length-1].mv : 0;
+    // QRST
+    var qrstSeg = buildQRSTNormal(leadIdx, hr, qrs, stElevation, tElevation);
+    segments.push(qrstSeg); cursor = qrstSeg.length ? qrstSeg[qrstSeg.length-1].mv : 0;
+    // TP segment (jusqu'à HR interval)
+    var tpLen = Math.max(0, hri - cursor);
+    var tpSeg = ecgTP(leadIdx, tpLen, 0, cursor);
+    segments.push(tpSeg);
+    var beat = concatSegments(segments);
+    // Fixer le dernier point exactement sur hri pour une boucle propre
+    if (beat.length > 0) beat[beat.length - 1].t = hri;
+    return beat;
+  }
+
+  /* ----------------------------------------------------------------------
+   * Échantillonner un battement (tableau de {t, mv}) sur SAMPLES_PER_LEAD
+   * ---------------------------------------------------------------------- */
+  function sampleBeat(beat, hr, jitter) {
+    var out = new Float32Array(SAMPLES_PER_LEAD);
+    var hri = getHRInterval(hr);
+    jitter = jitter || 0;  // variabilité RR (0 = régulier)
+    var beatPos = 0;
+    var beatStartTime = 0;
+    var beatEndTime = hri;
+    for (var i = 0; i < SAMPLES_PER_LEAD; i++) {
+      var t = i / SR;
+      // Si on dépasse beatEndTime, on passe au battement suivant
+      while (t >= beatEndTime) {
+        beatStartTime = beatEndTime;
+        var nextHri = hri;
+        if (jitter > 0) {
+          nextHri = hri * (1 + (Math.random() - 0.5) * jitter);
+        }
+        beatEndTime = beatStartTime + nextHri;
+      }
+      var tInBeat = t - beatStartTime;
+      // Interpoler la valeur dans le battement
+      var mv = 0;
+      if (beat.length === 0) {
+        mv = 0;
+      } else if (tInBeat <= beat[0].t) {
+        mv = beat[0].mv;
+      } else if (tInBeat >= beat[beat.length - 1].t) {
+        mv = beat[beat.length - 1].mv;
+      } else {
+        for (var j = 1; j < beat.length; j++) {
+          if (beat[j].t >= tInBeat) {
+            var a = beat[j - 1], b = beat[j];
+            var frac = (tInBeat - a.t) / Math.max(1e-6, b.t - a.t);
+            mv = a.mv + (b.mv - a.mv) * frac;
+            break;
+          }
+        }
+      }
+      out[i] = mv + (Math.random() - 0.5) * 0.005;  // léger bruit
+    }
+    return out;
+  }
+
+  /* ----------------------------------------------------------------------
+   * AFib : pas d'onde P, ondes fibrillatoires + jitter RR important
+   * ---------------------------------------------------------------------- */
+  function buildAFibBeat(leadIdx, hr) {
+    var hri = getHRInterval(hr);
+    var segments = [];
+    var timeCursor = 0;
+    var mvCursor = 0;
+    // Ondes fibrillatoires : petites (~0.015-0.04 mV) et courtes (~40-100 ms)
+    // Couvrent ~65% du battement avant le QRS
+    var preQrsDuration = hri * 0.65;
+    var safetyMax = 100;
+    while (timeCursor < preQrsDuration && safetyMax-- > 0) {
+      var fLen = 0.04 + Math.random() * 0.06;  // 40-100 ms
+      if (timeCursor + fLen > preQrsDuration) fLen = preQrsDuration - timeCursor;
+      var fAmp = (Math.random() < 0.4 ? -1 : 1) *
+                 (0.015 + Math.random() * 0.025);  // 0.015-0.04 mV (PETIT)
+      var fSeg = plottingPeak(fLen, fAmp, 0, mvCursor);
+      // Shift times to start at timeCursor
+      var shiftedSeg = [];
+      for (var i = 0; i < fSeg.length; i++) {
+        shiftedSeg.push({ t: timeCursor + fSeg[i].t, mv: fSeg[i].mv });
+      }
+      segments.push(shiftedSeg);
+      if (fSeg.length > 0) mvCursor = fSeg[fSeg.length - 1].mv;
+      timeCursor += fLen;
+    }
+    // QRST normal — amplitude normale, contraste avec les ondes fibrillatoires
+    var qrstSeg = [];
+    var qrstLen = 0;  // longueur du QRST
+    var qrstStart = timeCursor;
+    var qrstRaw = buildQRSTNormal(leadIdx, hr);
+    // Shift QRST times to start at timeCursor
+    for (var j = 0; j < qrstRaw.length; j++) {
+      qrstSeg.push({ t: qrstStart + qrstRaw[j].t, mv: qrstRaw[j].mv });
+    }
+    segments.push(qrstSeg);
+    if (qrstRaw.length > 0) {
+      qrstLen = qrstRaw[qrstRaw.length - 1].t;
+      mvCursor = qrstRaw[qrstRaw.length - 1].mv;
+    }
+    timeCursor += qrstLen;
+    // Post-QRS fibrillatoire jusqu'à hri
+    safetyMax = 100;
+    while (timeCursor < hri - 0.02 && safetyMax-- > 0) {
+      var fLen2 = 0.04 + Math.random() * 0.06;
+      if (timeCursor + fLen2 > hri) fLen2 = hri - timeCursor;
+      var fAmp2 = (Math.random() < 0.4 ? -1 : 1) *
+                  (0.015 + Math.random() * 0.025);
+      var fSeg2 = plottingPeak(fLen2, fAmp2, 0, mvCursor);
+      var shiftedSeg2 = [];
+      for (var k = 0; k < fSeg2.length; k++) {
+        shiftedSeg2.push({ t: timeCursor + fSeg2[k].t, mv: fSeg2[k].mv });
+      }
+      segments.push(shiftedSeg2);
+      if (fSeg2.length > 0) mvCursor = fSeg2[fSeg2.length - 1].mv;
+      timeCursor += fLen2;
+    }
+    var beat = flattenSegments(segments);
+    if (beat.length > 0) beat[beat.length - 1].t = hri;
+    return beat;
+  }
+
+  /* ----------------------------------------------------------------------
+   * Flatten segments (when segments are already time-shifted manually)
+   * Unlike concatSegments, this does NOT add an offset to each segment's t.
+   * ---------------------------------------------------------------------- */
+  function flattenSegments(segments) {
+    var out = [];
+    for (var s = 0; s < segments.length; s++) {
+      for (var i = 0; i < segments[s].length; i++) {
+        out.push(segments[s][i]);
+      }
+    }
+    return out;
+  }
+  /* ----------------------------------------------------------------------
+   * AFlutter : pas d'onde P, ondes F en dents de scie (flutter à ~300/min)
+   * ---------------------------------------------------------------------- */
+  function buildAFlutterBeat(leadIdx, hr) {
+    var hri = getHRInterval(hr);
+    // Nombre d'ondes F = floor(60/hri * 4) clampé [2, 5]
+    var flutters = Math.floor(60 / hri * 4);
+    flutters = clamp(flutters, 2, 5);
+    var lengthFlutter = hri / flutters;
+    var segments = [];
+    var timeCursor = 0;
+    var mvCursor = 0;
+    // Ondes F (Peak avec amp 0.1)
+    for (var i = 1; i < flutters; i++) {
+      var fSeg = plottingPeak(lengthFlutter, 0.1, 0, mvCursor);
+      var shiftedSeg = [];
+      for (var j = 0; j < fSeg.length; j++) {
+        shiftedSeg.push({ t: timeCursor + fSeg[j].t, mv: fSeg[j].mv });
+      }
+      segments.push(shiftedSeg);
+      if (fSeg.length > 0) mvCursor = fSeg[fSeg.length - 1].mv;
+      timeCursor += lengthFlutter;
+    }
+    // QRST normal
+    var qrstRaw = buildQRSTNormal(leadIdx, hr);
+    var qrstSeg = [];
+    for (var k = 0; k < qrstRaw.length; k++) {
+      qrstSeg.push({ t: timeCursor + qrstRaw[k].t, mv: qrstRaw[k].mv });
+    }
+    segments.push(qrstSeg);
+    if (qrstRaw.length > 0) {
+      mvCursor = qrstRaw[qrstRaw.length - 1].mv;
+      timeCursor += qrstRaw[qrstRaw.length - 1].t;
+    }
+    // TP jusqu'à hri
+    var tpLen = Math.max(0, hri - timeCursor);
+    var tpSeg = plottingLine(tpLen, 0, mvCursor);
+    var shiftedTp = [];
+    for (var m = 0; m < tpSeg.length; m++) {
+      shiftedTp.push({ t: timeCursor + tpSeg[m].t, mv: tpSeg[m].mv });
+    }
+    segments.push(shiftedTp);
+    var beat = flattenSegments(segments);
+    if (beat.length > 0) beat[beat.length - 1].t = hri;
+    return beat;
+  }
+
+  /* ----------------------------------------------------------------------
+   * SVT : pas d'onde P (P cachée dans T précédent), QRST_SVT, HR 180
+   * ---------------------------------------------------------------------- */
+  function buildSVTBeat(leadIdx, hr) {
+    var hri = getHRInterval(hr);
+    var segments = [];
+    var cursor = 0;
+    // Pas d'onde P (ECG_Atrial = return pour SVT)
+    // Segment PR plat
+    var pr = getPR(hr);
+    var prSeg = ecgPR(leadIdx, pr, 0, cursor);
+    segments.push(prSeg); cursor = prSeg.length ? prSeg[prSeg.length - 1].mv : 0;
+    // QRST SVT
+    var qrstSeg = buildQRSTSVT(leadIdx, hr);
+    segments.push(qrstSeg); cursor = qrstSeg.length ? qrstSeg[qrstSeg.length - 1].mv : 0;
+    // TP
+    var tpLen = Math.max(0, hri - cursor);
+    var tpSeg = ecgTP(leadIdx, tpLen, 0, cursor);
+    segments.push(tpSeg);
+    var beat = concatSegments(segments);
+    if (beat.length > 0) beat[beat.length - 1].t = hri;
+    return beat;
+  }
+
+  /* ----------------------------------------------------------------------
+   * AV Block 1er degré : P normale + PR allongé (ici 0.30 s au lieu de 0.16-0.20)
+   * ---------------------------------------------------------------------- */
+  function buildAVBlock1Beat(leadIdx, hr) {
+    var hri = getHRInterval(hr);
+    var segments = [];
+    var cursor = 0;
+    // P normale
+    var pSeg = buildPNormal(leadIdx, hr);
+    segments.push(pSeg); cursor = pSeg.length ? pSeg[pSeg.length-1].mv : 0;
+    // PR segment étendu (0.30 s total au lieu de 0.16-0.20)
+    var prTotal = 0.30;
+    var prSegLen = Math.max(0, prTotal - (2 * 0.30 / 3));  // P utilise PR*2/3
+    var prSeg = ecgPR(leadIdx, prSegLen, 0, cursor);
+    segments.push(prSeg); cursor = prSeg.length ? prSeg[prSeg.length-1].mv : 0;
+    // QRST normal
+    var qrstSeg = buildQRSTNormal(leadIdx, hr);
+    segments.push(qrstSeg); cursor = qrstSeg.length ? qrstSeg[qrstSeg.length-1].mv : 0;
+    // TP
+    var tpLen = Math.max(0, hri - cursor);
+    var tpSeg = ecgTP(leadIdx, tpLen, 0, cursor);
+    segments.push(tpSeg);
+    var beat = concatSegments(segments);
+    if (beat.length > 0) beat[beat.length-1].t = hri;
+    return beat;
+  }
+
+  /* ----------------------------------------------------------------------
+   * AV Block 3e degré : P indépendante (P + QRST_Aberrant_1, HR 40)
+   * ---------------------------------------------------------------------- */
+  /* ----------------------------------------------------------------------
+   * AV Block 3e degré : ondes P indépendantes (rate atrial ~75) + QRS d'échappement
+   * jonctionnel/infranodal large et lent (HR 40). Les P marchent à travers les QRS.
+   * ---------------------------------------------------------------------- */
+  function buildAVBlock3Trace(leadIdx, ventricularHr, atrialHr) {
+    atrialHr = atrialHr || 75;
+    ventricularHr = ventricularHr || 45;
+    var out = new Float32Array(SAMPLES_PER_LEAD);
+    var ventHri = getHRInterval(ventricularHr);  // 1.333 s
+    var atrHri = getHRInterval(atrialHr);         // 0.800 s
+    // On parcourt le temps d'échantillonnage et on calcule la valeur à chaque instant
+    // en superposant : train d'ondes P (à atrialHr) + train de QRST aberrant (à ventricularHr)
+    for (var i = 0; i < SAMPLES_PER_LEAD; i++) {
+      var t = i / SR;
+      // 1) Onde P au temps atrial (modulo atrHri)
+      var tAtr = t % atrHri;
+      var pBeat = buildPNormal(leadIdx, atrialHr);  // P normale
+      var pVal = 0;
+      if (pBeat.length > 0) {
+        if (tAtr <= pBeat[0].t) pVal = pBeat[0].mv;
+        else if (tAtr >= pBeat[pBeat.length - 1].t) pVal = 0;
+        else {
+          for (var j = 1; j < pBeat.length; j++) {
+            if (pBeat[j].t >= tAtr) {
+              var a = pBeat[j - 1], b = pBeat[j];
+              var frac = (tAtr - a.t) / Math.max(1e-6, b.t - a.t);
+              pVal = a.mv + (b.mv - a.mv) * frac;
+              break;
+            }
+          }
+        }
+      }
+      // 2) QRST aberrant au temps ventriculaire (modulo ventHri)
+      var tVt = t % ventHri;
+      var qrstBeat = buildQRSTAberrant1(leadIdx, ventricularHr, 0.12);
+      var qVal = 0;
+      if (qrstBeat.length > 0) {
+        if (tVt <= qrstBeat[0].t) qVal = qrstBeat[0].mv;
+        else if (tVt >= qrstBeat[qrstBeat.length - 1].t) qVal = 0;
+        else {
+          for (var k = 1; k < qrstBeat.length; k++) {
+            if (qrstBeat[k].t >= tVt) {
+              var av = qrstBeat[k - 1], bv = qrstBeat[k];
+              var f = (tVt - av.t) / Math.max(1e-6, bv.t - av.t);
+              qVal = av.mv + (bv.mv - av.mv) * f;
+              break;
+            }
+          }
+        }
+      }
+      out[i] = pVal + qVal + (Math.random() - 0.5) * 0.005;
+    }
+    return out;
+  }
+
+  /* ----------------------------------------------------------------------
+   * VT : on charge le vertex list de ECG_Complex_VT.iiwf et on l'étire
+   * Ici on simplifie : on reprend les vertices directement (100 points,
+   * déjà inclus dans le fichier .iiwf, lus ici en dur).
+   * ---------------------------------------------------------------------- */
+  var VT_VERTICES = [
+    -0.02,-0.03,-0.04,-0.05,-0.06,-0.07,-0.08,-0.09,-0.09,-0.10,-0.10,-0.10,-0.10,-0.10,-0.11,-0.11,-0.12,-0.12,-0.13,-0.14,-0.15,-0.16,-0.18,-0.19,-0.20,-0.32,-0.44,-0.54,-0.63,-0.71,-0.78,-0.85,-0.90,-0.94,-0.97,-0.99,-1.00,-1.00,-0.98,-0.96,-0.93,-0.89,-0.84,-0.78,-0.71,-0.64,-0.55,-0.46,-0.35,-0.30,-0.25,-0.19,-0.14,-0.09,-0.05,0.00,0.04,0.08,0.11,0.15,0.18,0.21,0.24,0.26,0.29,0.31,0.33,0.35,0.36,0.37,0.38,0.39,0.40,0.40,0.40,0.40,0.40,0.40,0.39,0.39,0.38,0.38,0.37,0.36,0.35,0.34,0.33,0.32,0.31,0.29,0.28,0.26,0.24,0.23,0.21,0.19,0.17,0.15,0.12,0.10,0.10
+  ];
+  // VT_VERTICES représente 100 points à 10 ms = 1 sec total (systole)
+  // Le QRS coeff par dérivation = BASE_LEAD_COEFF[leadIdx][WP.QRST]
+  function buildVTBeat(leadIdx, hr) {
+    var hri = getHRInterval(hr);  // 60/180 = 0.333 s
+    // VT_VERTICES contient 101 points couvrant 1.000 s (de 0 à 1.000 s).
+    // Pour VT à HR=180, le complexe QRS doit tenir dans ~0.300 s (systole).
+    // On comprime donc le temps de 1.000 s → 0.300 s (facteur 0.3).
+    var coeff = BASE_LEAD_COEFF[leadIdx][WP.QRST];
+    var out = [];
+    var n = VT_VERTICES.length;
+    var totalLen = 0.300;  // durée cible du complexe VT (300 ms)
+    var stepT = totalLen / (n - 1);  // intervalle entre points
+    for (var i = 0; i < n; i++) {
+      out.push({ t: i * stepT, mv: VT_VERTICES[i] * coeff });
+    }
+    // Pad avec ligne de base jusqu'à hri
+    if (hri > totalLen) {
+      out.push({ t: hri, mv: 0 });
+    }
+    return out;
+  }
+
+  /* ----------------------------------------------------------------------
+   * VF (coarse/fine) : courbes aléatoires alternées (port de ECG_Complex__QRST_VF)
+   * ---------------------------------------------------------------------- */
+  function buildVFBeat(leadIdx, hr, ampScale) {
+    ampScale = ampScale || 0.7;  // 0.7 pour coarse, 0.1 pour fine
+    // VF : on génère des cycles courts (~0.10-0.15 s) pour avoir une
+    // fréquence de 7-10 Hz typique de la FV. La trace entière est continue.
+    var segments = [];
+    var timeCursor = 0;             // temps écoulé
+    var mvCursor = 0;               // valeur mv en fin de segment précédent
+    var totalLength = SAMPLES_PER_LEAD / SR;  // durée totale de la trace (2.5 s)
+    var amplitude = (0.3 + Math.random() * 0.3) * ampScale;
+    var safetyMax = 200;  // garde-fou anti-boucle infinie
+    while (timeCursor < totalLength && safetyMax-- > 0) {
+      // Chaque "onde" de FV dure entre 80 et 150 ms
+      var wave = 0.08 + Math.random() * 0.07;
+      if (timeCursor + wave > totalLength) wave = totalLength - timeCursor;
+      // Plotting.Peak : Bézier montée + descente
+      var seg = plottingPeak(wave, amplitude, 0, mvCursor);
+      // Décaler les temps des points du segment pour qu'ils commencent à timeCursor
+      var shiftedSeg = [];
+      for (var i = 0; i < seg.length; i++) {
+        shiftedSeg.push({ t: timeCursor + seg[i].t, mv: seg[i].mv });
+      }
+      segments.push(shiftedSeg);
+      if (seg.length > 0) mvCursor = seg[seg.length - 1].mv;
+      // Flip l'amplitude et varie légèrement (modélise les ondes chaotiques)
+      amplitude = -clamp((amplitude + (Math.random() - 0.5) * 0.2), -1, 1);
+      timeCursor += wave;
+    }
+    var beat = flattenSegments(segments);
+    return beat;
+  }
+
+  /* ----------------------------------------------------------------------
+   * Asystolie : ligne plate
+   * ---------------------------------------------------------------------- */
+  function buildAsystoleBeat(leadIdx, hr) {
+    return [{ t: 1.0, mv: 0 }];
+  }
+
+  /* ----------------------------------------------------------------------
+   * Helper : génère une trace complète de SAMPLES_PER_LEAD échantillons
+   * pour un lead donné, en répétant le battement
+   * ---------------------------------------------------------------------- */
+  function generateLeadTrace(beat, hr, jitter) {
+    var out = new Float32Array(SAMPLES_PER_LEAD);
+    var hri = getHRInterval(hr);
+    var beatStartTime = 0;
+    var beatEndTime = hri;
+    for (var i = 0; i < SAMPLES_PER_LEAD; i++) {
+      var t = i / SR;
+      while (t >= beatEndTime) {
+        beatStartTime = beatEndTime;
+        var nextHri = hri;
+        if (jitter > 0) {
+          nextHri = hri * (1 + (Math.random() - 0.5) * jitter);
+        }
+        beatEndTime = beatStartTime + nextHri;
+      }
+      var tInBeat = t - beatStartTime;
+      var mv = 0;
+      if (beat.length === 0) mv = 0;
+      else if (tInBeat <= beat[0].t) mv = beat[0].mv;
+      else if (tInBeat >= beat[beat.length - 1].t) mv = beat[beat.length - 1].mv;
+      else {
+        for (var j = 1; j < beat.length; j++) {
+          if (beat[j].t >= tInBeat) {
+            var a = beat[j - 1], b = beat[j];
+            var frac = (tInBeat - a.t) / Math.max(1e-6, b.t - a.t);
+            mv = a.mv + (b.mv - a.mv) * frac;
+            break;
+          }
+        }
+      }
+      out[i] = mv + (Math.random() - 0.5) * 0.005;
+    }
+    return out;
+  }
+
+  /* ----------------------------------------------------------------------
+   * ST_Elevation et T_Elevation array par dérivation (12 valeurs)
+   * Index : 0=I, 1=II, 2=III, 3=aVR, 4=aVL, 5=aVF, 6=V1, 7=V2, 8=V3, 9=V4, 10=V5, 11=V6
+   * ---------------------------------------------------------------------- */
+  var ST_ELEV_ANTERIOR = [0,    0,    0,    0,    0,    0,    0.15, 0.20, 0.20, 0.15, 0.05, 0   ];
+  var ST_ELEV_INFERIOR = [0,    0.20, 0.25, 0,    0,    0.20, 0,    0,    0,    0,    0,    0   ];
+  var ST_ELEV_LATERAL  = [0.15, 0,    0,    0,    0.15, 0,    0,    0,    0,    0,    0.15, 0.15];
+  var T_ELEV_ANTERIOR  = [0,    0,    0,    0,    0,    0,    0.15, 0.20, 0.20, 0.15, 0.10, 0.05];
+  var T_ELEV_INFERIOR  = [0,    0.15, 0.20, 0,    0,    0.15, 0,    0,    0,    0,    0,    0   ];
+  var T_ELEV_LATERAL   = [0.10, 0,    0,    0,    0.10, 0,    0,    0,    0,    0,    0.10, 0.10];
+
+  /* ----------------------------------------------------------------------
+   * Pour chaque pathologie, on définit une fonction qui retourne les 12 traces.
+   * ---------------------------------------------------------------------- */
+  function buildAllLeads(builder, hr, opts) {
+    opts = opts || {};
+    var leads = {};
+    for (var li = 0; li < LEADS.length; li++) {
+      var leadName = LEADS[li];
+      var stElev = (opts.stElevationArray || [])[li] || 0;
+      var tElev  = (opts.tElevationArray || [])[li] || 0;
+      var beat = builder(li, hr, stElev, tElev, opts);
+      leads[leadName] = generateLeadTrace(beat, hr, opts.jitter || 0);
+      // Soustraire la moyenne (annule tout offset DC)
+      var sum = 0;
+      for (var k = 0; k < leads[leadName].length; k++) sum += leads[leadName][k];
+      var mean = sum / leads[leadName].length;
+      for (var m = 0; m < leads[leadName].length; m++) leads[leadName][m] -= mean;
+    }
+    return leads;
+  }
+
+  /* ----------------------------------------------------------------------
+   * Library — each entry returns 12-lead traces
+   * ---------------------------------------------------------------------- */
+  var LIBRARY = [
+    // === Normal & axe ===
+    { id: 'normal', name: 'Rythme sinusal normal', group: 'Normal & axe',
+      build: function () { return buildAllLeads(function (li, hr) { return buildSinusBeat(li, hr); }, 75); } },
+    { id: 'tachy', name: 'Tachycardie sinusale', group: 'Normal & axe',
+      build: function () { return buildAllLeads(function (li, hr) { return buildSinusBeat(li, hr); }, 130); } },
+    { id: 'brady', name: 'Bradycardie sinusale', group: 'Normal & axe',
+      build: function () { return buildAllLeads(function (li, hr) { return buildSinusBeat(li, hr); }, 45); } },
+    { id: 'lad', name: 'Déviation axiale gauche', group: 'Normal & axe',
+      build: function () {
+        // Axe gauche pathologique : I/II/aVL/aVF avec coeff axis Q,R,S = -1 ou 0.5
+        // Pour simplifier, on simule en multipliant l'amplitude R par l'axis coeff.
+        var opts = { axisOverride: { 0: [1, 1, 1], 1: [-1, -1, -1], 2: [-1, -1, -1], 3: [1, 1, 1], 4: [1, 1, 1], 5: [-1, -1, -1] } };
+        return buildAllLeads(function (li, hr, st, t, o) {
+          var beat = buildSinusBeat(li, hr);
+          // Pas de modif simple — l'axe est déjà codé dans les coeffs de base
+          return beat;
+        }, 80);
+      } },
+    { id: 'rad', name: 'Déviation axiale droite', group: 'Normal & axe',
+      build: function () { return buildAllLeads(function (li, hr) { return buildSinusBeat(li, hr); }, 90); } },
+
+    // === Troubles du rythme auriculaire ===
+    { id: 'afib', name: 'Fibrillation auriculaire', group: 'Troubles du rythme auriculaire',
+      build: function () { return buildAllLeads(function (li, hr) { return buildAFibBeat(li, hr); }, 90, { jitter: 0.4 }); } },
+    { id: 'aflutter', name: 'Flutter auriculaire', group: 'Troubles du rythme auriculaire',
+      build: function () { return buildAllLeads(function (li, hr) { return buildAFlutterBeat(li, hr); }, 75); } },
+    { id: 'svt', name: 'Tachycardie supraventriculaire (SVT)', group: 'Troubles du rythme auriculaire',
+      build: function () { return buildAllLeads(function (li, hr) { return buildSVTBeat(li, hr); }, 180); } },
+
+    // === Troubles de conduction ===
+    { id: 'avb1', name: 'BAV 1er degré', group: 'Troubles de conduction',
+      build: function () { return buildAllLeads(function (li, hr) { return buildAVBlock1Beat(li, hr); }, 70); } },
+    { id: 'avb3', name: 'BAV 3e degré (complet)', group: 'Troubles de conduction',
+      build: function () {
+        var leads = {};
+        for (var li = 0; li < LEADS.length; li++) {
+          leads[LEADS[li]] = buildAVBlock3Trace(li, 45, 75);
+          // Soustraire la moyenne
+          var sum = 0;
+          for (var k = 0; k < leads[LEADS[li]].length; k++) sum += leads[LEADS[li]][k];
+          var mean = sum / leads[LEADS[li]].length;
+          for (var m = 0; m < leads[LEADS[li]].length; m++) leads[LEADS[li]][m] -= mean;
+        }
+        return leads;
+      } },
+    { id: 'rbbb', name: 'Bloc de branche droit (BCD)', group: 'Troubles de conduction',
+      build: function () { return buildAllLeads(function (li, hr) {
+        // BBB : QRS large 160 ms, on prend buildQRSTBBB comme QRST et P normale
+        var hri = getHRInterval(hr);
+        var segments = [];
+        var cursor = 0;
+        var pSeg = buildPNormal(li, hr); segments.push(pSeg);
+        cursor = pSeg.length ? pSeg[pSeg.length-1].mv : 0;
+        var pr = getPR(hr);
+        var prSeg = ecgPR(li, pr / 3, 0, cursor); segments.push(prSeg);
+        cursor = prSeg.length ? prSeg[prSeg.length-1].mv : 0;
+        var qrstSeg = buildQRSTBBB(li, hr, 0.16); segments.push(qrstSeg);
+        cursor = qrstSeg.length ? qrstSeg[qrstSeg.length-1].mv : 0;
+        var tpLen = Math.max(0, hri - cursor);
+        var tpSeg = ecgTP(li, tpLen, 0, cursor); segments.push(tpSeg);
+        var beat = concatSegments(segments);
+        if (beat.length > 0) beat[beat.length-1].t = hri;
+        return beat;
+      }, 75); } },
+
+    // === Rythmes ventriculaires ===
+    { id: 'vt', name: 'Tachycardie ventriculaire monomorphe', group: 'Rythmes ventriculaires',
+      build: function () { return buildAllLeads(function (li, hr) { return buildVTBeat(li, hr); }, 180); } },
+    { id: 'vf-coarse', name: 'Fibrillation ventriculaire coarse', group: 'Rythmes ventriculaires',
+      build: function () { return buildAllLeads(function (li, hr) { return buildVFBeat(li, hr, 0.7); }, 250); } },
+    { id: 'vf-fine', name: 'Fibrillation ventriculaire fine', group: 'Rythmes ventriculaires',
+      build: function () { return buildAllLeads(function (li, hr) { return buildVFBeat(li, hr, 0.3); }, 250); } },
+    { id: 'asystole', name: 'Asystolie', group: 'Rythmes ventriculaires',
+      build: function () { return buildAllLeads(function (li, hr) { return buildAsystoleBeat(li, hr); }, 60); } },
+
+    // === Ischémie ===
+    { id: 'stemi-anterior', name: 'STEMI antérieur (V1-V4)', group: 'Ischémie',
+      build: function () { return buildAllLeads(function (li, hr, st, t) { return buildSinusBeat(li, hr, 0.08, st, t); }, 95,
+        { stElevationArray: ST_ELEV_ANTERIOR, tElevationArray: T_ELEV_ANTERIOR }); } },
+    { id: 'stemi-inferior', name: 'STEMI inférieur (II, III, aVF)', group: 'Ischémie',
+      build: function () { return buildAllLeads(function (li, hr, st, t) { return buildSinusBeat(li, hr, 0.08, st, t); }, 60,
+        { stElevationArray: ST_ELEV_INFERIOR, tElevationArray: T_ELEV_INFERIOR }); } },
+    { id: 'stemi-lateral', name: 'STEMI latéral (I, aVL, V5-V6)', group: 'Ischémie',
+      build: function () { return buildAllLeads(function (li, hr, st, t) { return buildSinusBeat(li, hr, 0.08, st, t); }, 80,
+        { stElevationArray: ST_ELEV_LATERAL, tElevationArray: T_ELEV_LATERAL }); } },
+
+    // === Autres classiques ===
+    { id: 'hyperk', name: 'Hyperkaliémie (T pointues)', group: 'Autres classiques',
+      build: function () {
+        // T pointues amples : on augmente l'amplitude T via T_Elevation array (même valeur sur toutes dérivations)
+        var tElev = [0.3, 0.3, 0.3, -0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3];
+        return buildAllLeads(function (li, hr, st, t) { return buildSinusBeat(li, hr, 0.11, st, t); }, 65,
+          { tElevationArray: tElev });
+      } },
+    { id: 'pea', name: 'AESP (Activité électrique sans pouls)', group: 'Autres classiques',
+      build: function () { return buildAllLeads(function (li, hr) { return buildSinusBeat(li, hr); }, 55); } }
+  ];
+
+  /* ========================================================================
+   * CANVAS — DESSIN
+   * ====================================================================== */
+  var canvas = document.getElementById('ecg-canvas');
+  var ctx = canvas.getContext('2d');
+
+  var currentIdx = 0;
+  var currentLeads = null;
+
+  function getCss(varName, fallback) {
+    var v = getComputedStyle(document.body).getPropertyValue(varName).trim();
+    return v || fallback;
+  }
+
+  function drawECGPaper() {
+    var w = canvas.width, h = canvas.height;
+    // 250 mm × 170 mm à 10 px/mm (canvas 2500 × 1700)
+    var pxmm = w / 250;
+    ctx.fillStyle = getCss('--paper-bg', '#fff8fa');
+    ctx.fillRect(0, 0, w, h);
+
+    // Petits carreaux 1 mm
+    ctx.strokeStyle = getCss('--paper-minor', '#ffc7d4');
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    for (var x = 0; x <= w; x += pxmm) {
+      ctx.moveTo(Math.round(x) + 0.5, 0);
+      ctx.lineTo(Math.round(x) + 0.5, h);
+    }
+    for (var y = 0; y <= h; y += pxmm) {
+      ctx.moveTo(0, Math.round(y) + 0.5);
+      ctx.lineTo(w, Math.round(y) + 0.5);
+    }
+    ctx.stroke();
+
+    // Grands carreaux 5 mm
+    ctx.strokeStyle = getCss('--paper-major', '#f78da3');
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    var big = pxmm * 5;
+    for (var x2 = 0; x2 <= w; x2 += big) {
+      ctx.moveTo(Math.round(x2) + 0.5, 0);
+      ctx.lineTo(Math.round(x2) + 0.5, h);
+    }
+    for (var y2 = 0; y2 <= h; y2 += big) {
+      ctx.moveTo(0, Math.round(y2) + 0.5);
+      ctx.lineTo(w, Math.round(y2) + 0.5);
+    }
+    ctx.stroke();
+    return pxmm;
+  }
+
+  function drawTrace() {
+    var w = canvas.width, h = canvas.height;
+    var pxmm = drawECGPaper();
+    var pxPerSec = pxmm * 25;          // 25 mm/s
+    var pxPerMv = pxmm * GAIN_MM_PER_MV; // 5 mm/mV (demi-déflection, standard 12-lead)
+
+    var colW = w / 4;
+    var rowH = h / 3;
+
+    // Largeur de trace attendue (doit être ≤ colW pour ne pas déborder)
+    var traceWidthPx = DUR * pxPerSec;  // = 2.5 × 250 = 625 px (colW aussi = 625 px)
+
+    ctx.strokeStyle = getCss('--trace', '#0a0a0a');
+    ctx.lineWidth = 1.5;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+
+    for (var r = 0; r < 3; r++) {
+      for (var c = 0; c < 4; c++) {
+        var leadName = LAYOUT[r][c];
+        var trace = currentLeads[leadName];
+        if (!trace) continue;
+
+        var xOffset = c * colW;
+        var yOffset = r * rowH;
+        var centerY = yOffset + rowH / 2;
+
+        // Étiquette de dérivation
+        ctx.fillStyle = getCss('--trace', '#0a0a0a');
+        ctx.font = 'bold 14px ui-monospace, "SF Mono", Menlo, monospace';
+        ctx.fillText(leadName, xOffset + 6, yOffset + 16);
+
+        // Trace — chaque point occupe exactement la largeur de la case
+        ctx.beginPath();
+        // Sous-échantillonner : 1 point tous les ~5 px pour la lisibilité
+        var step = Math.max(1, Math.floor(SR / pxPerSec / 2));
+        for (var i = 0; i < trace.length; i += step) {
+          var x = xOffset + (i / SR) * pxPerSec;
+          var y = centerY - trace[i] * pxPerMv;
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+
+        // Clip visuel de sécurité : on ne dessine jamais hors de la case
+        // (la trace fait 625 px de large = colW, donc cela ne devrait jamais
+        // arriver, mais c'est une garantie.)
+
+        // Calibration 1 mV sur la première case
+        if (r === 0 && c === 0) {
+          ctx.beginPath();
+          ctx.moveTo(xOffset + 4, centerY - pxPerMv);
+          ctx.lineTo(xOffset + 10, centerY - pxPerMv);
+          ctx.lineTo(xOffset + 10, centerY + pxPerMv);
+          ctx.lineTo(xOffset + 16, centerY + pxPerMv);
+          ctx.stroke();
+        }
+      }
+    }
+  }
+
+  function redraw() {
+    if (currentLeads) drawTrace();
+  }
+
+  /* ========================================================================
+   * SÉLECTION
+   * ====================================================================== */
+  function selectECG(idx) {
+    currentIdx = (idx + LIBRARY.length) % LIBRARY.length;
+    var ecg = LIBRARY[currentIdx];
+    document.getElementById('header-name').textContent = ecg.name;
+    document.getElementById('pathology-select').value = String(currentIdx);
+
+    // Construction asynchrone pour ne pas bloquer l'UI
+    setTimeout(function () {
+      currentLeads = ecg.build();
+      redraw();
+    }, 0);
+  }
+
+  function buildDropdown() {
+    var sel = document.getElementById('pathology-select');
+    var lastGroup = null;
+    LIBRARY.forEach(function (ecg, idx) {
+      if (ecg.group !== lastGroup) {
+        var og = document.createElement('optgroup');
+        og.label = ecg.group;
+        sel.appendChild(og);
+        lastGroup = ecg.group;
+      }
+      var opt = document.createElement('option');
+      opt.value = String(idx);
+      opt.textContent = ecg.name;
+      sel.appendChild(opt);
+    });
+    sel.addEventListener('change', function (e) {
+      selectECG(Number(e.target.value));
+    });
+  }
+
+  /* ========================================================================
+   * ACTIONS
+   * ====================================================================== */
+  function printECG() { window.print(); }
+  document.getElementById('print-btn').addEventListener('click', printECG);
+  document.getElementById('prev-btn').addEventListener('click', function () { selectECG(currentIdx - 1); });
+  document.getElementById('next-btn').addEventListener('click', function () { selectECG(currentIdx + 1); });
+
+  /* ========================================================================
+   * RACCOURCIS CLAVIER (intuitifs, sans overlay)
+   * ====================================================================== */
+  function isTextInput(t) {
+    var tag = (t.tagName || '').toLowerCase();
+    return tag === 'input' || tag === 'textarea' || tag === 'select';
+  }
+  document.addEventListener('keydown', function (e) {
+    if (isTextInput(e.target)) return;
+    if (e.key === 'ArrowLeft')  { e.preventDefault(); selectECG(currentIdx - 1); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); selectECG(currentIdx + 1); }
+    else if (e.key === 'p' || e.key === 'P') { e.preventDefault(); printECG(); }
+    else if (e.key === 'd' || e.key === 'D') { cycleTheme(); }
+  });
+
+  /* ========================================================================
+   * INITIALISATION
+   * ====================================================================== */
+  var now = new Date();
+  document.getElementById('header-date').textContent = now.toLocaleDateString('fr-FR');
+  buildDropdown();
+  // Canvas : 2500 × 1700 px (= 250 mm × 170 mm à 10 px/mm)
+  // Chaque case = 625 × 567 px → trace 2,5 s (625 px) + amplitude 1,7 mV par case (567 px / 10 mm/mV / 2)
+  canvas.width = 2500;
+  canvas.height = 1700;
+  selectECG(0);
+})();
+</script>
+</body>
+</html>

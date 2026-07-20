@@ -8,9 +8,10 @@ Bienvenue sur le dépôt officiel de PMSS. Nous proposons des applications web d
 
 La simulation haute fidélité ne devrait pas nécessiter un budget important ni un accès constant à Internet. Chaque application de ce dépôt est :
 
-- **100 % hors ligne :** Fonctionne parfaitement sans connexion Internet.
+- **100 % hors ligne :** Fonctionne parfaitement sans connexion Internet. L'ensemble des contenus audio et visuels est intégré.
 - **Légère :** Chaque application est un fichier HTML autonome, généralement sous 2 Mo.
-- **Universelle :** Fonctionne sur tout appareil doté d'un navigateur moderne — PC, tablette, smartphone.
+- **Universelle :** Fonctionne sur tout appareil doté d'un navigateur moderne comme un PC, tablette ou smartphone.
+- **Décentralisée :** Chaque application est autonome et sans dépendance externe.
 - **Gratuite :** Sous licence CC BY 4.0, y compris pour un usage commercial (avec attribution).
 
 ## Simulations disponibles

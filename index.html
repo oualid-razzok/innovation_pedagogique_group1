@@ -1,393 +1,752 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PMSS - Simulations en Santé</title>
-    <style>
-        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background: #f4f7f6; color: #333; }
-        h1 { text-align: center; color: #2c3e50; }
-        .subtitle { text-align: center; font-style: italic; color: #7f8c8d; margin-bottom: 30px;}
-        .app-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
-        .app-card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); text-align: center; }
-        .app-card h3 { margin-top: 0; color: #2980b9; }
-        .app-card .variant { display: inline-block; margin: 4px 4px 0; }
-        .btn { display: inline-block; margin-top: 10px; padding: 8px 16px; background: #2980b9; color: white; text-decoration: none; border-radius: 5px; font-size: 0.9em; }
-        .btn:hover { background: #3498db; }
-        .btn.secondary { background: #95a5a6; }
-        .btn.secondary:hover { background: #7f8c8d; }
-        .badge { display: inline-block; font-size: 0.7em; padding: 2px 8px; border-radius: 999px; background: #fef3c7; color: #92400e; margin-left: 6px; vertical-align: middle; }
-        footer { text-align: center; margin-top: 40px; font-size: 0.9em; color: #7f8c8d; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PMSS — Plate-forme Marocaine de Simulation en Santé</title>
 <style>
-/* ===== PMSS Theme + Shortcuts module ===== */
-:root {
-  --pmss-bg-app: #f5f5f5;
-  --pmss-bg-panel: #ffffff;
-  --pmss-bg-elev: #f5f5f5;
-  --pmss-bg-elev-hover: #e5e5e5;
-  --pmss-text-primary: #1a1a1a;
-  --pmss-text-secondary: #737373;
-  --pmss-border: #e5e5e5;
-  --pmss-border-strong: #d4d4d4;
-  --pmss-trace: #0a0a0a;
-  --pmss-paper-bg: #fff8fa;
-  --pmss-paper-minor: #ffc7d4;
-  --pmss-paper-major: #f78da3;
-  --pmss-accent: #dc2626;
-}
-body.pmss-sombre {
-  --pmss-bg-app: #0a0a0a;
-  --pmss-bg-panel: #1a1a1a;
-  --pmss-bg-elev: #262626;
-  --pmss-bg-elev-hover: #333333;
-  --pmss-text-primary: #f5f5f5;
-  --pmss-text-secondary: #a3a3a3;
-  --pmss-border: #2a2a2a;
-  --pmss-border-strong: #404040;
-  --pmss-trace: #e5e5e5;
-  --pmss-paper-bg: #0d0d0d;
-  --pmss-paper-minor: #2a1a1f;
-  --pmss-paper-major: #3d2530;
-  --pmss-accent: #ef4444;
-  background: var(--pmss-bg-app) !important;
-  color: var(--pmss-text-primary) !important;
-}
-body.pmss-sombre html, body.pmss-sombre { background: #0a0a0a !important; }
-body.pmss-sombre .ecg-widget,
-body.pmss-sombre main,
-body.pmss-sombre .app-card,
-body.pmss-sombre .card,
-body.pmss-sombre .panel,
-body.pmss-sombre header,
-body.pmss-sombre .ecg-header,
-body.pmss-sombre .ecg-controls {
-  background: var(--pmss-bg-panel) !important;
-  color: var(--pmss-text-primary) !important;
-}
-body.pmss-sombre h1, body.pmss-sombre h2, body.pmss-sombre h3,
-body.pmss-sombre .ecg-title h1, body.pmss-sombre .lead-name,
-body.pmss-sombre .value, body.pmss-sombre .hr-value {
-  color: var(--pmss-text-primary) !important;
-}
-body.pmss-sombre .subtitle, body.pmss-sombre .unit,
-body.pmss-sombre .lead-desc, body.pmss-sombre .scale-anno,
-body.pmss-sombre .ecg-title .subtitle {
-  color: var(--pmss-text-secondary) !important;
-}
-body.pmss-sombre .ecg-header, body.pmss-sombre .ecg-controls,
-body.pmss-sombre .app-card, body.pmss-sombre header.app-header {
-  border-color: var(--pmss-border) !important;
-}
-body.pmss-sombre .lead-btn, body.pmss-sombre .pause-btn,
-body.pmss-sombre button {
-  background: var(--pmss-bg-elev) !important;
-  color: var(--pmss-text-primary) !important;
-  border-color: var(--pmss-border-strong) !important;
-}
-body.pmss-sombre .lead-btn:hover, body.pmss-sombre .pause-btn:hover {
-  background: var(--pmss-bg-elev-hover) !important;
-}
-body.pmss-sombre .lead-btn.active, body.pmss-sombre .pause-btn.paused {
-  background: var(--pmss-text-primary) !important;
-  color: var(--pmss-bg-panel) !important;
-}
-body.pmss-sombre input[type="range"] {
-  background: var(--pmss-border) !important;
-}
-body.pmss-sombre input[type="range"]::-webkit-slider-thumb {
-  background: var(--pmss-text-primary) !important;
-  border-color: var(--pmss-bg-panel) !important;
-}
-body.pmss-sombre .btn {
-  background: var(--pmss-text-primary) !important;
-  color: var(--pmss-bg-panel) !important;
-}
-body.pmss-sombre .btn.secondary {
-  background: var(--pmss-bg-elev) !important;
-  color: var(--pmss-text-primary) !important;
-}
-body.pmss-sombre footer {
-  color: var(--pmss-text-secondary) !important;
-}
+  * { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* Floating toolbar */
-#pmss-toolbar {
-  position: fixed;
-  top: 10px;
-  right: 10px;
-  z-index: 9999;
-  display: flex;
-  gap: 4px;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-}
-#pmss-toolbar button {
-  width: 34px; height: 34px;
-  display: inline-flex; align-items: center; justify-content: center;
-  background: var(--pmss-bg-panel, #fff);
-  border: 1px solid var(--pmss-border-strong, #d4d4d4);
-  border-radius: 6px;
-  cursor: pointer;
-  color: var(--pmss-text-primary, #1a1a1a);
-  font-size: 14px;
-  padding: 0;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.12);
-  transition: background-color 0.15s ease, transform 0.1s ease;
-}
-#pmss-toolbar button:hover {
-  background: var(--pmss-bg-elev-hover, #e5e5e5);
-  transform: translateY(-1px);
-}
-#pmss-toolbar button:focus-visible {
-  outline: 2px solid var(--pmss-text-primary, #1a1a1a);
-  outline-offset: 1px;
-}
-body.pmss-sombre #pmss-toolbar button {
-  background: #1a1a1a;
-  border-color: #404040;
-  color: #f5f5f5;
-}
-body.pmss-sombre #pmss-toolbar button:hover { background: #333333; }
+  :root {
+    --bg-app: #f5f5f5;
+    --bg-panel: #ffffff;
+    --bg-elev: #f5f5f5;
+    --bg-elev-hover: #e5e5e5;
+    --text-primary: #1a1a1a;
+    --text-secondary: #737373;
+    --border: #e5e5e5;
+    --border-strong: #d4d4d4;
+    --accent: #dc2626;
+    --accent-soft: #fef2f2;
+    --rose-50: #fff1f2;
+    --rose-100: #ffe4e6;
+    --rose-500: #f43f5e;
+    --rose-600: #e11d48;
+    --rose-700: #be123c;
+    --teal-50: #f0fdfa;
+    --teal-600: #0d9488;
+    --violet-600: #7c3aed;
+    --emerald-600: #059669;
+    --zinc-100: #f4f4f5;
+    --zinc-400: #a1a1aa;
+    --zinc-500: #71717a;
+    --zinc-600: #52525b;
+    --zinc-900: #18181b;
+    --zinc-950: #09090b;
+  }
+  body.sombre {
+    --bg-app: #1f1f1f;
+    --bg-panel: #2a2a2a;
+    --bg-elev: #333333;
+    --bg-elev-hover: #404040;
+    --text-primary: #f0f0f0;
+    --text-secondary: #b0b0b0;
+    --border: #3a3a3a;
+    --border-strong: #555555;
+    --accent: #ef4444;
+    --accent-soft: #2a1414;
+    --rose-50: #1a0f10;
+    --rose-100: #2a1416;
+    --rose-500: #f43f5e;
+    --rose-600: #e11d48;
+    --rose-700: #be123c;
+    --teal-50: #0a1a18;
+    --teal-600: #14b8a6;
+    --violet-600: #a78bfa;
+    --emerald-600: #34d399;
+    --zinc-100: #27272a;
+    --zinc-400: #a1a1aa;
+    --zinc-500: #a1a1aa;
+    --zinc-600: #d4d4d8;
+    --zinc-900: #18181b;
+    --zinc-950: #09090b;
+  }
 
-/* Shortcuts overlay */
-#pmss-shortcuts-overlay {
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,0.5);
-  display: flex; align-items: center; justify-content: center;
-  z-index: 10000; opacity: 0; pointer-events: none;
-  transition: opacity 0.2s;
-}
-#pmss-shortcuts-overlay.visible { opacity: 1; pointer-events: auto; }
-#pmss-shortcuts-card {
-  background: var(--pmss-bg-panel, #fff);
-  color: var(--pmss-text-primary, #1a1a1a);
-  padding: 24px 28px;
-  border-radius: 10px;
-  max-width: 460px; width: 90%;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-}
-#pmss-shortcuts-card h2 { font-size: 16px; margin-bottom: 12px; }
-.pmss-shortcuts-list { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 18px; }
-.pmss-shortcut-item {
-  display: flex; justify-content: space-between; align-items: baseline;
-  padding: 5px 0; border-bottom: 1px solid var(--pmss-border, #e5e5e5);
-  font-size: 12px;
-}
-.pmss-shortcut-item .key {
-  font-family: ui-monospace, "SF Mono", Menlo, monospace;
-  background: var(--pmss-bg-elev, #f5f5f5);
-  padding: 1px 6px;
-  border-radius: 3px;
-  border: 1px solid var(--pmss-border-strong, #d4d4d4);
-  font-size: 11px;
-}
-.pmss-shortcuts-close {
-  margin-top: 16px; text-align: center;
-  font-size: 11px; color: var(--pmss-text-secondary, #737373);
-}
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg-app);
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
 
+  /* ===== Gradient background wrapper ===== */
+  .bg-gradient {
+    background: linear-gradient(135deg, var(--rose-50) 0%, var(--bg-panel) 50%, var(--teal-50) 100%);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  body.sombre .bg-gradient {
+    background: linear-gradient(135deg, var(--zinc-950) 0%, var(--zinc-900) 50%, var(--zinc-950) 100%);
+  }
+
+  /* ===== Header ===== */
+  header.app-header {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--rose-100);
+    padding: 12px 16px;
+  }
+  body.sombre header.app-header {
+    background: rgba(26, 26, 26, 0.8);
+    border-bottom-color: var(--zinc-100);
+  }
+  .header-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .logo {
+    width: 40px; height: 40px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--rose-500), var(--rose-600));
+    display: flex; align-items: center; justify-content: center;
+    color: white;
+    font-size: 20px;
+    box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
+    flex-shrink: 0;
+  }
+  .header-title { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .header-title h1 {
+    font-size: 20px; font-weight: 700;
+    display: flex; align-items: center; gap: 8px;
+    color: var(--text-primary);
+    white-space: nowrap;
+  }
+  .header-title h1 .flag { font-size: 24px; }
+  .header-title h1 .version {
+    font-size: 11px; font-weight: 500;
+    background: var(--bg-elev);
+    color: var(--text-secondary);
+    padding: 2px 8px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+  }
+  .header-title p {
+    font-size: 12px; color: var(--text-secondary);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  @media (max-width: 540px) { .header-title p { display: none; } }
+
+  .header-right { display: flex; align-items: center; gap: 8px; }
+  .header-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 14px;
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px; font-weight: 500;
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+    font-family: inherit;
+  }
+  .header-btn:hover { background: var(--bg-elev); border-color: var(--text-secondary); }
+  .header-btn.primary {
+    background: var(--rose-600); color: white; border-color: var(--rose-600);
+  }
+  .header-btn.primary:hover { background: var(--rose-700); }
+  .header-btn .icon { font-size: 16px; line-height: 1; }
+  @media (max-width: 540px) { .header-btn .label { display: none; } }
+
+  /* ===== Hero ===== */
+  .hero {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 48px 16px 32px;
+    text-align: center;
+  }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 12px;
+    background: var(--rose-100);
+    color: var(--rose-700);
+    border-radius: 999px;
+    font-size: 12px; font-weight: 500;
+    margin-bottom: 16px;
+  }
+  body.sombre .hero-badge { color: #fda4af; background: var(--rose-100); }
+  .hero-badge .icon { font-size: 12px; }
+  .hero h2 {
+    font-size: 36px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 16px;
+    line-height: 1.15;
+    background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  @media (min-width: 640px) { .hero h2 { font-size: 48px; } }
+  .hero p {
+    max-width: 640px;
+    margin: 0 auto 24px;
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+  }
+  @media (min-width: 640px) { .hero p { font-size: 18px; } }
+  .hero p em { font-style: italic; }
+
+  /* ===== Stats ===== */
+  .stats {
+    max-width: 640px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  @media (min-width: 640px) { .stats { grid-template-columns: repeat(4, 1fr); } }
+  .stat-card {
+    background: var(--bg-panel);
+    border: 1px solid var(--rose-100);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+  }
+  body.sombre .stat-card { border-color: var(--zinc-100); }
+  .stat-value { font-size: 24px; font-weight: 700; }
+  .stat-value.rose { color: var(--rose-600); }
+  .stat-value.teal { color: var(--teal-600); }
+  .stat-value.violet { color: var(--violet-600); }
+  .stat-value.emerald { color: var(--emerald-600); }
+  .stat-label {
+    font-size: 11px; color: var(--text-secondary);
+    text-transform: uppercase; letter-spacing: 0.05em;
+    margin-top: 2px;
+  }
+
+  /* ===== Filters ===== */
+  .filters {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 16px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  @media (min-width: 640px) {
+    .filters { flex-direction: row; align-items: center; justify-content: space-between; }
+  }
+  .filter-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    background: var(--rose-50);
+    border: 1px solid var(--rose-100);
+    border-radius: 10px;
+    padding: 4px;
+  }
+  body.sombre .filter-tabs { background: var(--zinc-900); border-color: var(--zinc-100); }
+  .filter-tab {
+    padding: 6px 12px;
+    border: none;
+    background: transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px; font-weight: 500;
+    color: var(--text-secondary);
+    font-family: inherit;
+    transition: background-color 0.15s ease, color 0.15s ease;
+    white-space: nowrap;
+  }
+  .filter-tab:hover { color: var(--text-primary); }
+  .filter-tab.active {
+    background: var(--bg-panel);
+    color: var(--text-primary);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  body.sombre .filter-tab.active { background: var(--bg-elev); }
+
+  .search-wrap {
+    position: relative;
+    width: 100%;
+  }
+  @media (min-width: 640px) { .search-wrap { width: 288px; } }
+  .search-wrap .search-icon {
+    position: absolute;
+    left: 12px; top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+    font-size: 16px;
+    pointer-events: none;
+  }
+  .search-input {
+    width: 100%;
+    padding: 8px 12px 8px 36px;
+    background: var(--bg-panel);
+    border: 1px solid var(--rose-100);
+    border-radius: 8px;
+    font-size: 14px;
+    color: var(--text-primary);
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.15s ease;
+  }
+  body.sombre .search-input { border-color: var(--zinc-100); }
+  .search-input:focus { border-color: var(--rose-500); }
+
+  /* ===== App grid ===== */
+  main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 16px 48px;
+    flex: 1;
+    width: 100%;
+  }
+  .app-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  @media (min-width: 768px) { .app-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 1024px) { .app-grid { grid-template-columns: repeat(3, 1fr); } }
+
+  .app-card {
+    background: var(--bg-panel);
+    border: 1px solid var(--rose-100);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+  }
+  body.sombre .app-card { border-color: var(--zinc-100); }
+  .app-card:hover {
+    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+    border-color: var(--rose-500);
+  }
+  body.sombre .app-card:hover { border-color: var(--zinc-400); }
+
+  .card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .card-header-left { display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1; }
+  .card-icon {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--rose-100), var(--rose-50));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+  body.sombre .card-icon {
+    background: linear-gradient(135deg, var(--zinc-100), var(--zinc-900));
+  }
+  .card-title-wrap { min-width: 0; }
+  .card-title {
+    font-size: 14px; font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.3;
+    overflow: hidden; text-overflow: ellipsis;
+  }
+  .card-meta { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+  .card-category {
+    font-size: 10px; font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .card-badge {
+    font-size: 10px; font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--rose-100);
+    color: var(--rose-700);
+    border: 1px solid var(--rose-500);
+    white-space: nowrap;
+  }
+  body.sombre .card-badge { color: #fda4af; }
+
+  .card-desc {
+    font-size: 13px; line-height: 1.5;
+    color: var(--text-secondary);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 40px;
+  }
+  .card-highlights { display: flex; flex-wrap: wrap; gap: 4px; }
+  .card-highlight {
+    font-size: 10px;
+    background: var(--bg-elev);
+    color: var(--text-secondary);
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+  .card-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--rose-50);
+    margin-top: auto;
+  }
+  body.sombre .card-footer { border-top-color: var(--zinc-100); }
+  .card-size {
+    font-size: 10px; color: var(--text-secondary);
+    font-family: ui-monospace, monospace;
+    text-transform: uppercase;
+  }
+  .card-actions { display: flex; gap: 4px; }
+  .card-btn {
+    padding: 4px 10px;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    text-decoration: none;
+    font-family: inherit;
+    transition: background-color 0.15s ease, color 0.15s ease;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .card-btn:hover { background: var(--bg-elev); color: var(--text-primary); }
+
+  /* ===== Empty state ===== */
+  .empty {
+    text-align: center;
+    padding: 64px 16px;
+    color: var(--text-secondary);
+  }
+  .empty .icon { font-size: 48px; margin-bottom: 16px; opacity: 0.3; }
+
+  /* ===== Footer ===== */
+  footer {
+    border-top: 1px solid var(--rose-100);
+    padding: 16px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: auto;
+  }
+  body.sombre footer { border-top-color: var(--zinc-100); }
+  footer a { color: var(--rose-600); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
 </style>
 </head>
 <body>
-<div id="pmss-toolbar">
-  <button type="button" id="pmss-theme-btn" aria-label="Basculer thème Clair/Sombre" title="Thème (D)">◐</button>
-</div>
-<div id="pmss-shortcuts-overlay">
-  <div id="pmss-shortcuts-card">
-    <h2>Raccourcis clavier</h2>
-    <div class="pmss-shortcuts-list">
-      <div class="pmss-shortcut-item"><span>Pause / Reprise</span><span class="key">Espace</span></div>
-      <div class="pmss-shortcut-item"><span>Cycler thème</span><span class="key">D</span></div>
-      <div class="pmss-shortcut-item"><span>Enregistrer PNG</span><span class="key">S</span></div>
-      <div class="pmss-shortcut-item"><span>Réinitialiser</span><span class="key">R</span></div>
-      <div class="pmss-shortcut-item"><span>Aide</span><span class="key">?</span></div>
-      <div class="pmss-shortcut-item"><span>Fermer</span><span class="key">Échap</span></div>
+<div class="bg-gradient">
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="header-left">
+        <div class="header-title">
+          <h1><span class="flag">🇲🇦</span> PMSS <span class="version">v1.1.0</span></h1>
+          <p>Plate-forme Marocaine de Simulation en Santé</p>
+        </div>
+      </div>
+      <div class="header-right">
+        <button type="button" class="header-btn" id="theme-btn">
+          <span class="label" id="theme-label">Sombre</span>
+        </button>
+        <a href="https://github.com/oualid-razzok/PMSS-Simulations" target="_blank" rel="noopener noreferrer" class="header-btn">
+          <span class="icon">↗</span>
+          <span class="label">GitHub</span>
+        </a>
+      </div>
     </div>
-    <div class="pmss-shortcuts-close">Appuyez sur ? ou Échap pour fermer</div>
-  </div>
-</div>
+  </header>
 
-
-    <h1>🇲🇦 PMSS</h1>
-    <p class="subtitle">La Plate-forme Marocaine de Simulation en Santé<br>« La simulation est une technique, pas une technologie. »</p>
-
-    <div class="app-grid">
-        <div class="app-card">
-            <h3>Simulateur ECG normal</h3>
-            <p>Simulez et comprenez les tracés ECG normaux.</p>
-            <a href="normal-ecg-simulateur.html" class="btn">Ouvrir l'application</a>
-        </div>
-        <div class="app-card">
-            <h3>Axe cardiaque <span class="badge">2 versions</span></h3>
-            <p>Outil interactif pour déterminer l'axe électrique du cœur.</p>
-            <div class="variant">
-                <a href="axe-cardiaque.html" class="btn">Version animée</a>
-            </div>
-            <div class="variant">
-                <a href="axe-cardiaque-statique.html" class="btn secondary">Version statique</a>
-            </div>
-        </div>
-        <div class="app-card">
-            <h3>Cartographie des électrodes</h3>
-            <p>Visualisez le placement des dérivations ECG.</p>
-            <a href="carto-electrode.html" class="btn">Ouvrir l'application</a>
-        </div>
-        <div class="app-card">
-            <h3>Étiqueteur d'ondes</h3>
-            <p>Entraînez-vous à identifier les ondes P, QRS et T.</p>
-            <a href="etiqueteur-ondes.html" class="btn">Ouvrir l'application</a>
-        </div>
-        <div class="app-card">
-            <h3>Trouver l'erreur</h3>
-            <p>Entraînement diagnostique pour repérer les anomalies ECG.</p>
-            <a href="trouver-erreur.html" class="btn">Ouvrir l'application</a>
-        </div>
-        <div class="app-card">
-            <h3>ECG-anomalies</h3>
-            <p>Quiz diagnostique avancé : 17 anomalies ECG critiques à identifier sur 12 dérivations.</p>
-            <a href="ecg-anomalies.html" class="btn">Ouvrir l'application</a>
-        </div>
-        <div class="app-card">
-            <h3>Capno-bases</h3>
-            <p>Simulateur de capnographie : pilotez V̇CO₂, Q̇ et V̇A pour comprendre l'EtCO₂.</p>
-            <a href="capno-bases.html" class="btn">Ouvrir l'application</a>
-        </div>
-        <div class="app-card">
-            <h3>ECG sur papier <span class="badge">Nouveau</span></h3>
-            <p>Bibliothèque de 15 ECG 12 dérivations prêts à imprimer sur papier ECG standard.</p>
-            <a href="ecg-papier.html" class="btn">Ouvrir l'application</a>
-        </div>
-        <div class="app-card">
-            <h3>Auscultateur cardiaque <span class="badge">Nouveau</span></h3>
-            <p>16 sons cardiaques (normaux, souffles, B3/B4, frottements) avec placement du stéthoscope sur thorax et cycle cardiaque.</p>
-            <a href="auscultateur-cardiaque.html" class="btn">Ouvrir l'application</a>
-        </div>
+  <section class="hero">
+    <div class="hero-badge">
+      <span>100% hors ligne · Single-file HTML · CC BY 4.0</span>
     </div>
+    <h2>La simulation médicale,<br>accessible à tous.</h2>
+    <p>
+      <em>« La simulation est une technique, pas une technologie. »</em><br>
+      <span id="app-count">10</span> applications web légères, gratuites, fonctionnant hors ligne sur tout appareil —
+      pour démocratiser l'enseignement médical.
+    </p>
+    <div class="stats" id="stats"></div>
+  </section>
 
-    <footer>
-        <p>© 2026 PMSS (Oualid Razzok). Usage éducatif libre sous licence CC BY 4.0.<br>
-        En cas d'utilisation dans une publication, merci de <a href="https://github.com/oualid-razzok/PMSS-Simulations">citer ce dépôt</a>.</p>
-    </footer>
+  <section class="filters">
+    <div class="filter-tabs" id="filter-tabs">
+      <button type="button" class="filter-tab active" data-filter="all">Toutes</button>
+      <button type="button" class="filter-tab" data-filter="ecg">ECG & axe</button>
+      <button type="button" class="filter-tab" data-filter="quiz">Quiz</button>
+      <button type="button" class="filter-tab" data-filter="capno">Capno</button>
+      <button type="button" class="filter-tab" data-filter="papier">Papier</button>
+      <button type="button" class="filter-tab" data-filter="auscultation">Auscultation</button>
+    </div>
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" class="search-input" id="search" placeholder="Rechercher une app…">
+    </div>
+  </section>
+
+  <main>
+    <div class="app-grid" id="app-grid"></div>
+    <div class="empty" id="empty" style="display:none">
+      <div class="icon">🔍</div>
+      <p>Aucune application trouvée.</p>
+    </div>
+  </main>
+
+  <footer>
+    © 2026 PMSS (Oualid Razzok). Usage éducatif libre sous licence CC BY 4.0.<br>
+    En cas d'utilisation dans une publication, merci de <a href="https://github.com/oualid-razzok/PMSS-Simulations">citer ce dépôt</a>.
+  </footer>
+</div>
 
 <script>
 (function () {
   'use strict';
-  // ===== THÈME (toujours démarrer en Clair) =====
-  function pmssSetTheme(name) {
-    if (name === 'sombre') document.body.classList.add('pmss-sombre');
-    else document.body.classList.remove('pmss-sombre');
-    // Notifier le canvas de redessiner si nécessaire
-    window.dispatchEvent(new CustomEvent('pmss-theme-change', { detail: { theme: name } }));
-  }
-  function pmssCycleTheme() {
-    pmssSetTheme(document.body.classList.contains('pmss-sombre') ? 'clair' : 'sombre');
-  }
-  document.getElementById('pmss-theme-btn').addEventListener('click', pmssCycleTheme);
 
-  // Helper pour lire les variables CSS depuis le canvas
-  window.pmssGetCss = function (varName, fallback) {
-    var v = getComputedStyle(document.body).getPropertyValue(varName).trim();
-    return v || fallback;
+  /* ===== APP DATA ===== */
+  var APPS = [
+    {
+      title: 'Simulateur ECG normal',
+      file: 'normal-ecg-simulateur.html',
+      category: 'ecg', catLabel: 'ECG & axe',
+      description: 'Simulez et comprenez les tracés ECG normaux en rythme sinusal sur 12 dérivations.',
+      size: '21 KB',
+      highlights: ['12 dérivations', 'FC réglable 40-120', 'Balayage temps réel', 'Grille papier ECG']
+    },
+    {
+      title: 'Axe cardiaque (animé)',
+      file: 'axe-cardiaque.html',
+      category: 'ecg', catLabel: 'ECG & axe',
+      badge: '2 versions',
+      description: 'Outil interactif pour déterminer l\'axe électrique du cœur. Tracés animés en balayage continu.',
+      size: '25 KB',
+      highlights: ['Axe -90° à +180°', 'Tracés animés', 'Calcul automatique', 'Quadrants colorés']
+    },
+    {
+      title: 'Axe cardiaque (statique)',
+      file: 'axe-cardiaque-statique.html',
+      category: 'ecg', catLabel: 'ECG & axe',
+      description: 'Même outil que la version animée, mais avec tracés statiques redessinés à chaque changement.',
+      size: '25 KB',
+      highlights: ['Économise la batterie', 'Comparaison visuelle', 'Mêmes calculs', 'Idéal mobile']
+    },
+    {
+      title: 'Cartographie des électrodes',
+      file: 'carto-electrode.html',
+      category: 'ecg', catLabel: 'ECG & axe',
+      description: 'Visualisez le placement des dérivations ECG et la cartographie des électrodes sur le thorax.',
+      size: '125 KB',
+      highlights: ['Vue anatomique', 'Dérivations membres', 'Dérivations précordiales', 'Interactive']
+    },
+    {
+      title: 'Étiqueteur d\'ondes',
+      file: 'etiqueteur-ondes.html',
+      category: 'quiz', catLabel: 'Quiz',
+      description: 'Entraînez-vous à identifier les ondes P, QRS et T sur les tracés ECG par glisser-déposer.',
+      size: '36 KB',
+      highlights: ['Drag & drop', 'Feedback immédiat', 'Score final', 'Plusieurs tracés']
+    },
+    {
+      title: 'Trouver l\'erreur',
+      file: 'trouver-erreur.html',
+      category: 'quiz', catLabel: 'Quiz',
+      description: 'Entraînement diagnostique pour repérer les anomalies dans les tracés ECG.',
+      size: '130 KB',
+      highlights: ['Mode recherche', 'Anomalies variées', 'Indices progressifs', 'Correction expliquée']
+    },
+    {
+      title: 'ECG-anomalies',
+      file: 'ecg-anomalies.html',
+      category: 'quiz', catLabel: 'Quiz',
+      badge: 'Nouveau',
+      description: 'Quiz diagnostique avancé : 18 anomalies ECG critiques (STEMI, Brugada, Torsades, etc.) à identifier sur 12 dérivations.',
+      size: '55 KB',
+      highlights: ['18 anomalies critiques', '12 dérivations', 'STEMI/Brugada/Torsades', 'Quiz chronométré']
+    },
+    {
+      title: 'Capno-bases',
+      file: 'capno-bases.html',
+      category: 'capno', catLabel: 'Capnographie',
+      badge: 'Nouveau',
+      description: 'Simulateur de capnographie : pilotez V̇CO₂, Q̇ et V̇A pour comprendre les déterminants de l\'EtCO₂.',
+      size: '39 KB',
+      highlights: ['Équation d\'alvéole', 'V̇CO₂ réglable', 'Q̇ cardiaque', 'V̇A alvéolaire', 'Tracé temps réel']
+    },
+    {
+      title: 'ECG sur papier',
+      file: 'ecg-papier.html',
+      category: 'papier', catLabel: 'Impression',
+      badge: 'Nouveau',
+      description: 'Bibliothèque de 15 ECG 12 dérivations (normal, axe, STEMI, blocs, AFib, flutter, hyperkaliémie, HVG) prêts à imprimer sur papier ECG standard.',
+      size: '44 KB',
+      highlights: ['15 ECG pathologiques', 'STEMI / blocs / AFib', 'Papier 25 mm/s · 10 mm/mV', 'Impression native']
+    },
+    {
+      title: 'Auscultateur cardiaque',
+      file: 'auscultateur-cardiaque.html',
+      category: 'auscultation', catLabel: 'Auscultation',
+      badge: 'Nouveau',
+      description: '16 sons cardiaques (normaux, souffles systoliques/diastoliques, B3/B4, frottements) avec placement du stéthoscope sur thorax et cycle cardiaque animé.',
+      size: '955 KB',
+      highlights: ['16 sons cardiaques', '4 foyers d\'auscultation', 'Thorax anatomique', 'Cycle systole/diastole']
+    },
+    {
+      title: 'Auscultateur pulmonaire',
+      file: 'auscultateur-pulmonaire.html',
+      category: 'auscultation', catLabel: 'Auscultation',
+      badge: 'Nouveau',
+      description: '8 sons respiratoires (vésiculaire, bronchique, crépitants, sibilances, stridor, frottements) avec vues thoracique antérieure et postérieure et cycle respiratoire I/E animé.',
+      size: '681 KB',
+      highlights: ['8 sons respiratoires', 'Vues antérieure + postérieure', 'Cycle I/E animé', 'Différenciation pleural/péricardique']
+    }
+  ];
+
+  /* ===== CATEGORY COLORS ===== */
+  var CAT_COLORS = {
+    'ecg':          'background:var(--rose-100);color:var(--rose-700);',
+    'quiz':         'background:#fef3c7;color:#92400e;',
+    'capno':        'background:#ccfbf1;color:#0f766e;',
+    'papier':       'background:#ede9fe;color:#6d28d9;',
+    'auscultation': 'background:#cffafe;color:#0e7490;'
   };
-  window.pmssIsSombre = function () { return document.body.classList.contains('pmss-sombre'); };
-
-  // ===== OVERLAY RACCOURCIS =====
-  var overlay = document.getElementById('pmss-shortcuts-overlay');
-  function pmssToggleShortcuts() { overlay.classList.toggle('visible'); }
-  document.getElementById('pmss-help-btn').addEventListener('click', pmssToggleShortcuts);
-  overlay.addEventListener('click', function (e) {
-    if (e.target === overlay) overlay.classList.remove('visible');
-  });
-
-  // ===== SAVE PNG — cherche tous les canvas et combine =====
-  function pmssSavePng() {
-    var canvases = document.querySelectorAll('canvas');
-    if (canvases.length === 0) {
-      alert('Aucun canvas à enregistrer sur cette page.');
-      return;
+  body_sombre_colors();
+  function body_sombre_colors() {
+    // Override for dark mode
+    if (document.body.classList.contains('sombre')) {
+      CAT_COLORS = {
+        'ecg':          'background:var(--rose-100);color:#fda4af;',
+        'quiz':         'background:#422006;color:#fcd34d;',
+        'capno':        'background:#042f2e;color:#5eead4;',
+        'papier':       'background:#2e1065;color:#c4b5fd;',
+        'auscultation': 'background:#083344;color:#67e8f9;'
+      };
     }
-    // Si un seul canvas, on l'enregistre directement
-    if (canvases.length === 1) {
-      var c = canvases[0];
-      var link = document.createElement('a');
-      link.download = 'pmss-' + (document.title || 'capture').replace(/[^a-z0-9]+/gi, '-').toLowerCase() + '-' + Date.now() + '.png';
-      link.href = c.toDataURL('image/png');
-      link.click();
-      return;
-    }
-    // Plusieurs canvas : on les combine verticalement
-    var maxW = 0, totalH = 0;
-    canvases.forEach(function (c) {
-      maxW = Math.max(maxW, c.width);
-      totalH += c.height + 10;
-    });
-    var tmp = document.createElement('canvas');
-    tmp.width = maxW;
-    tmp.height = totalH;
-    var tctx = tmp.getContext('2d');
-    tctx.fillStyle = pmssIsSombre() ? '#1a1a1a' : '#ffffff';
-    tctx.fillRect(0, 0, tmp.width, tmp.height);
-    var y = 0;
-    canvases.forEach(function (c) {
-      tctx.drawImage(c, 0, y);
-      y += c.height + 10;
-    });
-    var link = document.createElement('a');
-    link.download = 'pmss-' + (document.title || 'capture').replace(/[^a-z0-9]+/gi, '-').toLowerCase() + '-' + Date.now() + '.png';
-    link.href = tmp.toDataURL('image/png');
-    link.click();
-  }
-  document.getElementById('pmss-save-btn').addEventListener('click', pmssSavePng);
-
-  // ===== PAUSE — tente de basculer la pause de l'app existante =====
-  function pmssTogglePause() {
-    // Cherche un bouton de pause existant et clique dessus
-    var pauseBtn = document.getElementById('pause-btn') || document.querySelector('[aria-label*="pause" i], [aria-label*="Pause"]');
-    if (pauseBtn) { pauseBtn.click(); return true; }
-    // Sinon, dispatch un event pour les apps qui écoutent
-    window.dispatchEvent(new CustomEvent('pmss-toggle-pause'));
-    return false;
   }
 
-  // ===== RESET — recharge la page =====
-  function pmssReset() {
-    if (confirm('Réinitialiser la simulation ?')) location.reload();
-  }
+  /* ===== STATE ===== */
+  var filter = 'all';
+  var search = '';
 
-  // ===== RACCOURCIS CLAVIER =====
-  function isTextInput(t) {
-    var tag = (t.tagName || '').toLowerCase();
-    return tag === 'input' || tag === 'textarea' || tag === 'select';
-  }
-  document.addEventListener('keydown', function (e) {
-    if (overlay.classList.contains('visible')) {
-      if (e.key === 'Escape' || e.key === '?') {
-        overlay.classList.remove('visible');
-        e.preventDefault();
+  /* ===== RENDER ===== */
+  function renderApps() {
+    var grid = document.getElementById('app-grid');
+    var empty = document.getElementById('empty');
+    var filtered = APPS.filter(function (app) {
+      if (filter !== 'all' && app.category !== filter) return false;
+      if (search) {
+        var q = search.toLowerCase();
+        return app.title.toLowerCase().indexOf(q) >= 0 ||
+               app.description.toLowerCase().indexOf(q) >= 0 ||
+               app.highlights.some(function (h) { return h.toLowerCase().indexOf(q) >= 0; });
       }
+      return true;
+    });
+
+    if (filtered.length === 0) {
+      grid.innerHTML = '';
+      empty.style.display = 'block';
       return;
     }
-    if (isTextInput(e.target)) return;
-    var k = e.key.toLowerCase();
-    if (e.key === ' ' || e.key === 'Spacebar') {
-      // Ne pas conflit avec un bouton de pause natif
-      var tag = (e.target.tagName || '').toLowerCase();
-      if (tag === 'button' || tag === 'a') return;
-      e.preventDefault();
-      pmssTogglePause();
-    } else if (k === 'd') {
-      pmssCycleTheme();
-    } else if (k === 's') {
-      e.preventDefault();
-      pmssSavePng();
-    } else if (k === 'r') {
-      pmssReset();
-    } else if (e.key === '?' || e.key === 'Help') {
-      e.preventDefault();
-      pmssToggleShortcuts();
-    }
+    empty.style.display = 'none';
+
+    grid.innerHTML = filtered.map(function (app) {
+      var catStyle = CAT_COLORS[app.category] || '';
+      var highlightsHtml = app.highlights.slice(0, 3).map(function (h) {
+        return '<span class="card-highlight">' + h + '</span>';
+      }).join('');
+      var badgeHtml = app.badge ? '<span class="card-badge">' + app.badge + '</span>' : '';
+      return '<a href="' + app.file + '" class="app-card">' +
+        '<div class="card-header">' +
+          '<div class="card-header-left">' +
+            '<div class="card-icon">' + app.icon + '</div>' +
+            '<div class="card-title-wrap">' +
+              '<div class="card-title">' + app.title + '</div>' +
+              '<div class="card-meta">' +
+                '<span class="card-category" style="' + catStyle + '">' + app.catLabel + '</span>' +
+                badgeHtml +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="card-desc">' + app.description + '</div>' +
+        '<div class="card-highlights">' + highlightsHtml + '</div>' +
+        '<div class="card-footer">' +
+          '<span class="card-size">' + app.size + '</span>' +
+          '<div class="card-actions">' +
+            '<span class="card-btn">↗ Ouvrir</span>' +
+          '</div>' +
+        '</div>' +
+      '</a>';
+    }).join('');
+  }
+
+  function renderStats() {
+    var stats = document.getElementById('stats');
+    var total = APPS.length;
+    var totalSize = '~' + Math.round(APPS.reduce(function (s, a) { return s + parseFloat(a.size); }, 0)) + ' KB';
+    var categories = new Set(APPS.map(function (a) { return a.category; })).size;
+    var newApps = APPS.filter(function (a) { return a.badge === 'Nouveau'; }).length;
+
+    document.getElementById('app-count').textContent = total;
+    stats.innerHTML =
+      '<div class="stat-card"><div class="stat-value rose">' + total + '</div><div class="stat-label">Applications</div></div>' +
+      '<div class="stat-card"><div class="stat-value teal">' + totalSize + '</div><div class="stat-label">Taille totale</div></div>' +
+      '<div class="stat-card"><div class="stat-value violet">' + categories + '</div><div class="stat-label">Catégories</div></div>' +
+      '<div class="stat-card"><div class="stat-value emerald">' + newApps + '</div><div class="stat-label">Nouvelles apps</div></div>';
+  }
+
+  /* ===== FILTERS ===== */
+  document.querySelectorAll('.filter-tab').forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      filter = tab.dataset.filter;
+      document.querySelectorAll('.filter-tab').forEach(function (t) {
+        t.classList.toggle('active', t === tab);
+      });
+      renderApps();
+    });
   });
+
+  /* ===== SEARCH ===== */
+  document.getElementById('search').addEventListener('input', function (e) {
+    search = e.target.value;
+    renderApps();
+  });
+
+  /* ===== THEME ===== */
+  function setTheme(name) {
+    if (name === 'sombre') {
+      document.body.classList.add('sombre');
+      document.getElementById('theme-icon').textContent = '☀️';
+      document.getElementById('theme-label').textContent = 'Clair';
+    } else {
+      document.body.classList.remove('sombre');
+      document.getElementById('theme-icon').textContent = '🌙';
+      document.getElementById('theme-label').textContent = 'Sombre';
+    }
+    body_sombre_colors();
+    renderApps();
+  }
+  function cycleTheme() {
+    setTheme(document.body.classList.contains('sombre') ? 'clair' : 'sombre');
+  }
+  document.getElementById('theme-btn').addEventListener('click', cycleTheme);
+  document.addEventListener('keydown', function (e) {
+    var tag = (e.target.tagName || '').toLowerCase();
+    if (tag === 'input' || tag === 'textarea') return;
+    if (e.key === 'd' || e.key === 'D') cycleTheme();
+  });
+
+  /* ===== INIT ===== */
+  renderStats();
+  renderApps();
 })();
 </script>
 </body>
